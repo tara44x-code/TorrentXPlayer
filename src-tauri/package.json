@@ -1,0 +1,8 @@
+{
+  "name": "torrentxplayer-android-build",
+  "private": true,
+  "description": "Lets the Android Gradle build run the Tauri CLI from src-tauri (npm run tauri).",
+  "scripts": {
+    "tauri": "cd .. && node ui/node_modules/@tauri-apps/cli/tauri.js"
+  }
+}
