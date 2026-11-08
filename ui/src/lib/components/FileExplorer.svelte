@@ -583,7 +583,7 @@
     display: grid;
     grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
     height: 100%;
-    background: linear-gradient(180deg, #17150f 0%, var(--bg) 40%);
+    background: linear-gradient(180deg, #0b1122 0%, var(--bg) 40%);
   }
 
   .torrents {
@@ -630,7 +630,7 @@
   }
 
   .torrents button.current {
-    background: rgb(242 180 90 / 9%);
+    background: rgb(0 229 255 / 9%);
     color: var(--accent);
   }
 
@@ -670,7 +670,7 @@
   }
 
   .error {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .link {
@@ -701,9 +701,9 @@
     min-height: 0;
     overflow-y: auto;
     padding: 0.5rem;
-    border: 1px solid #24221e;
+    border: 1px solid #141a2e;
     border-radius: 0.6rem;
-    background: rgb(21 21 28 / 60%);
+    background: rgb(13 16 34 / 60%);
   }
 
   h4 {
@@ -770,7 +770,7 @@
 
   .small {
     padding: 0.25rem 0.55rem;
-    border: 1px solid #3a3731;
+    border: 1px solid #252e49;
     border-radius: 0.4rem;
     color: var(--text-muted);
     font-size: 0.78rem;
@@ -794,9 +794,9 @@
     min-width: 0;
     overflow-y: auto;
     padding: 0.75rem;
-    border: 1px solid #24221e;
+    border: 1px solid #141a2e;
     border-radius: 0.6rem;
-    background: rgb(21 21 28 / 60%);
+    background: rgb(13 16 34 / 60%);
   }
 
   .view {
@@ -805,7 +805,7 @@
     min-height: 8rem;
     overflow: hidden;
     border-radius: 0.45rem;
-    background: #0d0d12;
+    background: #070a17;
   }
 
   .view img,

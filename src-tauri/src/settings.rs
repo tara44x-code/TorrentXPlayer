@@ -18,8 +18,10 @@ use serde::Serialize;
 use serde_json::Value;
 use tauri::{AppHandle, Emitter as _, Manager as _, State};
 use tokio::sync::watch;
+#[cfg(desktop)]
+use torrentplayer_settings::{KEYRING_SERVICE, KeyringStore, LEGACY_KEYRING_SERVICE};
 use torrentplayer_settings::{
-    EngineSetting, KEYRING_SERVICE, KeyringStore, LEGACY_KEYRING_SERVICE, LogLevel, NetworkHold,
+    EngineSetting, LogLevel, NetworkHold,
     PatchError, SecretError, SecretKey, SecretStatus, SecretStore, SecretString, Settings,
     SettingsStore, WireGuardSettings, Zeroize as _, apply_patch,
 };
@@ -63,8 +65,15 @@ impl SettingsState {
         default_download_dir: PathBuf,
         log: Option<LogApplier>,
     ) -> Self {
-        let secrets =
+        #[cfg(desktop)]
+        let secrets: Arc<dyn SecretStore> =
             Arc::new(KeyringStore::new(KEYRING_SERVICE).with_legacy(LEGACY_KEYRING_SERVICE));
+        // Phones have no OS credential store the app can reach, but the app's own folder is
+        // private to it.
+        #[cfg(mobile)]
+        let secrets: Arc<dyn SecretStore> = Arc::new(torrentplayer_settings::FileStore::new(
+            config_dir.join("secrets.json"),
+        ));
         Self::new(
             SettingsStore::new(config_dir),
             secrets,
@@ -786,6 +795,14 @@ pub(crate) async fn choose_download_dir(
     state.update(&app, &patch).await.map(Some)
 }
 
+/// Phones have no folder picker the app can use: downloads stay in the app's own folder.
+#[cfg(mobile)]
+#[allow(clippy::unused_async, reason = "matches the desktop picker's signature")]
+async fn pick_download_dir(_window: &tauri::WebviewWindow, _state: &SettingsState) -> Option<String> {
+    None
+}
+
+#[cfg(desktop)]
 async fn pick_download_dir(window: &tauri::WebviewWindow, state: &SettingsState) -> Option<String> {
     let start = state.download_dir(&state.current());
     let mut dialog = rfd::AsyncFileDialog::new()

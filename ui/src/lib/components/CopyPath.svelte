@@ -115,7 +115,7 @@
 
   .error {
     margin: 0.4rem 0 0;
-    color: #e8907a;
+    color: #ff5c8a;
     font-size: 0.8rem;
   }
 </style>

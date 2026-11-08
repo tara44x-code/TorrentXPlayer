@@ -1341,7 +1341,7 @@
     justify-content: center;
     gap: 0.4rem;
     padding: 2rem;
-    background: radial-gradient(circle at 50% 40%, rgb(242 180 90 / 14%), #000 65%);
+    background: radial-gradient(circle at 50% 40%, rgb(0 229 255 / 14%), #000 65%);
     pointer-events: none;
     text-align: center;
   }
@@ -1362,7 +1362,7 @@
     width: 38%;
     height: 38%;
     fill: none;
-    stroke: #f2b45a;
+    stroke: var(--accent);
     stroke-width: 1.4;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -1562,13 +1562,15 @@
 
   .end-actions .primary {
     border-color: var(--accent);
-    background: var(--accent);
-    color: #1a1408;
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
+    color: #00161c;
     font-weight: 600;
   }
 
   .end-actions .primary:hover {
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
     filter: brightness(1.08);
   }
 

@@ -172,7 +172,7 @@
     box-sizing: border-box;
     overflow-y: auto;
     border-right: 1px solid rgb(255 255 255 / 5%);
-    background: #0d0d12;
+    background: #070a17;
   }
 
   .history {
@@ -237,7 +237,7 @@
 
   .item.active {
     color: var(--accent);
-    background: rgb(242 180 90 / 8%);
+    background: rgb(0 229 255 / 8%);
   }
 
   .item.active::before {
@@ -247,7 +247,8 @@
     left: -0.3rem;
     width: 2px;
     border-radius: 2px;
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
     content: '';
   }
 
@@ -288,8 +289,9 @@
     padding: 0 0.2rem;
     box-sizing: border-box;
     border-radius: 1rem;
-    background: var(--accent);
-    color: #1a1408;
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
+    color: #00161c;
     font-size: 0.58rem;
     font-weight: 700;
     line-height: 0.95rem;
@@ -304,7 +306,8 @@
     width: 0.4rem;
     height: 0.4rem;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
   }
 
   .sr-only {
@@ -316,33 +319,70 @@
     white-space: nowrap;
   }
 
-  /* Small windows: icons only. */
+  .item.active .icon {
+    filter: drop-shadow(0 0 0.35rem rgb(0 229 255 / 70%));
+  }
+
+  /* Phones: a tab bar along the bottom of the screen. */
   @media (max-width: 640px) {
     .rail {
-      width: 2.9rem;
-      padding-inline: 0.2rem;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.25rem;
+      width: 100%;
+      padding: 0.3rem 0.4rem calc(0.3rem + env(safe-area-inset-bottom));
+      overflow: auto hidden;
+      border-top: 1px solid rgb(0 229 255 / 18%);
+      border-right: none;
+      background: rgb(7 10 23 / 96%);
+      box-shadow: 0 -0.4rem 1.4rem rgb(0 229 255 / 8%);
     }
 
     .history {
-      flex-direction: column;
-      align-items: center;
+      flex: none;
+      padding: 0 0.3rem 0 0;
+      border-right: 1px solid rgb(255 255 255 / 6%);
+      border-bottom: none;
     }
 
-    .label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
+    .step {
+      padding: 0.45rem;
+    }
+
+    ul {
+      display: flex;
+      flex: 1;
+      justify-content: space-around;
+    }
+
+    li {
+      flex: 1;
+      min-width: 0;
     }
 
     .item {
-      padding: 0.55rem 0;
+      padding: 0.4rem 0.2rem;
     }
 
     .item.active::before {
-      left: -0.2rem;
+      top: auto;
+      right: 30%;
+      bottom: -0.3rem;
+      left: 30%;
+      width: auto;
+      height: 2px;
+      box-shadow: var(--glow);
+    }
+
+    .settings {
+      flex: none;
+      width: auto;
+      margin-top: 0;
+      padding-inline: 0.6rem;
+    }
+
+    .label {
+      font-size: 0.6rem;
     }
   }
 </style>

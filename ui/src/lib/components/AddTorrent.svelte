@@ -501,7 +501,7 @@
 </script>
 
 <section class="add" class:has-results={hasResults} aria-label="Search">
-  <h1>TorrentPlayer</h1>
+  <h1>Torrent <span class="x">X</span> Player</h1>
   <p class="tagline">Stream at the speed of the swarm.</p>
 
   <form onsubmit={submit} role="search">
@@ -645,11 +645,23 @@
   h1 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(3rem, 8vw, 5.5rem);
-    font-weight: 400;
+    font-size: clamp(2rem, 8.5vw, 5rem);
+    font-weight: 700;
     letter-spacing: 0.04em;
+    text-align: center;
     color: var(--accent);
-    text-shadow: 0 0 40px rgb(242 180 90 / 25%);
+    text-shadow:
+      0 0 0.35rem rgb(0 229 255 / 70%),
+      0 0 1.5rem rgb(0 229 255 / 40%),
+      0 0 3rem rgb(0 229 255 / 20%);
+  }
+
+  h1 .x {
+    color: var(--accent-2);
+    text-shadow:
+      0 0 0.35rem rgb(255 43 214 / 80%),
+      0 0 1.5rem rgb(255 43 214 / 45%),
+      0 0 3rem rgb(255 43 214 / 25%);
   }
 
   .tagline {
@@ -667,7 +679,7 @@
     flex: 1;
     min-width: 0;
     padding: 0.8rem 1rem;
-    border: 1px solid #2c2a26;
+    border: 1px solid #1a2138;
     border-radius: 0.6rem;
     background: var(--surface);
     color: var(--text);
@@ -676,7 +688,7 @@
 
   input[type='text']:focus,
   select.category:focus-visible {
-    outline: 2px solid rgb(242 180 90 / 50%);
+    outline: 2px solid rgb(0 229 255 / 50%);
     outline-offset: 1px;
   }
 
@@ -684,7 +696,7 @@
     flex: none;
     max-width: 9.5rem;
     padding: 0 0.6rem;
-    border: 1px solid #2c2a26;
+    border: 1px solid #1a2138;
     border-radius: 0.6rem;
     background: var(--surface);
     color: var(--text-muted);
@@ -694,7 +706,7 @@
   }
 
   select.category.set {
-    border-color: #4a3f2c;
+    border-color: #1d3b52;
     color: var(--accent);
   }
 
@@ -702,8 +714,9 @@
     padding: 0.8rem 1.4rem;
     border: none;
     border-radius: 0.6rem;
-    background: var(--accent);
-    color: #1a1408;
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
+    color: #00161c;
     font: inherit;
     font-weight: 600;
     cursor: pointer;
@@ -717,7 +730,7 @@
   button.secondary {
     background: transparent;
     color: var(--text);
-    border: 1px solid #3a3731;
+    border: 1px solid #252e49;
     font-weight: 500;
   }
 
@@ -737,7 +750,7 @@
 
   button.chip {
     padding: 0.25rem 0.7rem;
-    border: 1px solid #2c2a26;
+    border: 1px solid #1a2138;
     border-radius: 1rem;
     background: transparent;
     color: var(--text-muted);
@@ -746,7 +759,7 @@
   }
 
   button.chip:hover:not(:disabled) {
-    border-color: #4a3f2c;
+    border-color: #1d3b52;
     color: var(--text);
   }
 
@@ -762,7 +775,7 @@
   }
 
   .status [role='alert'] {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .none {

@@ -446,8 +446,9 @@
     right: -0.35rem;
     min-width: 0.9rem;
     border-radius: 1rem;
-    background: var(--accent);
-    color: #1a1408;
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
+    color: #00161c;
     font-size: 0.58rem;
     font-weight: 700;
     line-height: 0.9rem;
@@ -467,9 +468,9 @@
   .blocked {
     margin: 0 0.6rem 0.5rem;
     padding: 0.5rem 0.6rem;
-    border: 1px solid #6b3a30;
+    border: 1px solid #5c1f3a;
     border-radius: 0.5rem;
-    background: rgb(232 144 122 / 8%);
+    background: rgb(255 92 138 / 8%);
     font-size: 0.8rem;
     line-height: 1.4;
   }
@@ -481,13 +482,13 @@
 
   .blocked button {
     padding: 0.2rem 0.55rem;
-    border: 1px solid #6b3a30;
+    border: 1px solid #5c1f3a;
     border-radius: 0.35rem;
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .blocked button:hover {
-    background: rgb(232 144 122 / 10%);
+    background: rgb(255 92 138 / 10%);
   }
 
   .keys {
@@ -508,9 +509,9 @@
     gap: 0.1rem;
     margin: 0 0.6rem 0.5rem;
     padding: 0.45rem 0.6rem;
-    border: 1px solid #4a3f2c;
+    border: 1px solid #1d3b52;
     border-radius: 0.5rem;
-    background: rgb(242 180 90 / 7%);
+    background: rgb(0 229 255 / 7%);
   }
 
   .now .label {
@@ -622,14 +623,14 @@
 
   .confirm button {
     padding: 0.2rem 0.5rem;
-    border: 1px solid #3a3731;
+    border: 1px solid #252e49;
     border-radius: 0.35rem;
     color: var(--text);
   }
 
   .confirm .danger {
-    border-color: #6b3a30;
-    color: #e8907a;
+    border-color: #5c1f3a;
+    color: #ff5c8a;
   }
 
   /* Narrow windows: the panel would squeeze the video, so it overlays it instead. */

@@ -43,7 +43,7 @@
   </dl>
   <h4>Third-party software</h4>
   <p class="intro">
-    TorrentPlayer is built on open-source software. Each component keeps its own license; the full
+    Torrent X Player is built on open-source software. Each component keeps its own license; the full
     texts are below.
   </p>
   {#if summary.length > 0}

@@ -968,7 +968,7 @@
   }
 
   .leaf.playing {
-    background: rgb(242 180 90 / 8%);
+    background: rgb(0 229 255 / 8%);
   }
 
   .leaf.unqueued .title {
@@ -1000,7 +1000,7 @@
   }
 
   .remove:hover:not(:disabled) {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .status {
@@ -1033,7 +1033,7 @@
 
   .pause[aria-pressed='true'] {
     color: var(--accent);
-    background: rgb(242 180 90 / 12%);
+    background: rgb(0 229 255 / 12%);
   }
 
   .bar.placeholder {
@@ -1057,7 +1057,8 @@
     left: 0.4rem;
     height: 2px;
     border-radius: 2px;
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
     content: '';
   }
 
@@ -1167,7 +1168,7 @@
   }
 
   .group-remove:hover:not(:disabled) {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .remove-count {

@@ -491,7 +491,7 @@
     margin: 0;
     padding: 0.3rem;
     border-radius: 0.5rem;
-    background: rgb(16 16 20 / 94%);
+    background: rgb(9 11 24 / 94%);
     list-style: none;
     transform: translateX(-50%);
     box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
@@ -541,7 +541,8 @@
     bottom: 0.15rem;
     height: 2px;
     border-radius: 1px;
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
     content: '';
   }
 
@@ -556,7 +557,7 @@
     padding: 0.3rem;
     overflow-y: auto;
     border-radius: 0.5rem;
-    background: rgb(16 16 20 / 94%);
+    background: rgb(9 11 24 / 94%);
     list-style: none;
     box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
   }

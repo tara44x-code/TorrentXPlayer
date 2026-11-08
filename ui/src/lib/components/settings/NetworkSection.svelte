@@ -64,7 +64,7 @@
     {
       value: 'wireGuard',
       label: 'WireGuard',
-      help: 'Import a WireGuard .conf file from your VPN provider and connect inside TorrentPlayer. No separate VPN app or administrator rights are needed.',
+      help: 'Import a WireGuard .conf file from your VPN provider and connect inside Torrent X Player. No separate VPN app or administrator rights are needed.',
     },
   ];
 
@@ -407,7 +407,7 @@
       id="network-proxy-dns"
       label="Resolve names through the proxy"
       path="network.socks5.proxyDns"
-      help="On: the proxy looks up host names, so your DNS server never sees them. Off: TorrentPlayer looks them up and sends only addresses."
+      help="On: the proxy looks up host names, so your DNS server never sees them. Off: Torrent X Player looks them up and sends only addresses."
     >
       <Toggle
         id="network-proxy-dns"
@@ -482,7 +482,7 @@
     id="network-incoming"
     label="Accept incoming peer connections"
     path="network.incomingPeers.enabled"
-    help={`More peers and better uploads. Off: TorrentPlayer only connects out, so no firewall prompt appears. ${INCOMING_HELP[n.mode]}`}
+    help={`More peers and better uploads. Off: Torrent X Player only connects out, so no firewall prompt appears. ${INCOMING_HELP[n.mode]}`}
   >
     <Toggle
       id="network-incoming"
@@ -498,7 +498,7 @@
       id="network-incoming-port"
       label="Listening port"
       path="network.incomingPeers.port"
-      help="TCP port, 1024–65535. 0 picks a random port each time TorrentPlayer starts; choose a fixed one to forward it on your router or VPN."
+      help="TCP port, 1024–65535. 0 picks a random port each time Torrent X Player starts; choose a fixed one to forward it on your router or VPN."
       error={errors['network.incomingPeers.port']}
     >
       <input
@@ -521,7 +521,7 @@
         id="network-incoming-upnp"
         label="Forward the port with UPnP"
         path="network.incomingPeers.upnp"
-        help="Asks your router to forward the port while TorrentPlayer listens (UPnP; NAT-PMP is not supported). Direct mode only: never used with a VPN or proxy."
+        help="Asks your router to forward the port while Torrent X Player listens (UPnP; NAT-PMP is not supported). Direct mode only: never used with a VPN or proxy."
       >
         <Toggle
           id="network-incoming-upnp"
@@ -580,7 +580,7 @@
   <section class="card" aria-labelledby="wireguard-title">
     <h3 id="wireguard-title">WireGuard configuration</h3>
     <p class="intro">
-      Import a <code>.conf</code> file from your VPN provider. TorrentPlayer connects through its
+      Import a <code>.conf</code> file from your VPN provider. Torrent X Player connects through its
       own WireGuard tunnel, carrying search, trackers, and peer connections. Your keys stay in the
       system credential store. Traffic stays blocked until the server authenticates. The
       configuration must include a <code>DNS</code> server for search and other host names.
@@ -737,23 +737,23 @@
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
-    background: #6b6862;
+    background: #5d6a8a;
   }
 
   .protected .dot {
-    background: #57b26f;
+    background: #39ff9f;
   }
 
   .pending .dot {
-    background: #d9b44a;
+    background: #ffd23f;
   }
 
   .blocked .dot {
-    background: #d9604f;
+    background: #ff3d6e;
   }
 
   .blocked .status-label {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .facts {
@@ -788,7 +788,7 @@
   }
 
   .events li.error {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .when {
@@ -826,8 +826,8 @@
   }
 
   .mode.selected {
-    border-color: rgb(242 180 90 / 55%);
-    background: rgb(242 180 90 / 6%);
+    border-color: rgb(0 229 255 / 55%);
+    background: rgb(0 229 255 / 6%);
   }
 
   .mode:has(input:focus-visible) {
@@ -890,7 +890,7 @@
   .preview {
     margin-top: 0.75rem;
     padding: 0.85rem 1rem;
-    border: 1px solid rgb(242 180 90 / 30%);
+    border: 1px solid rgb(0 229 255 / 30%);
     border-radius: 0.6rem;
   }
 

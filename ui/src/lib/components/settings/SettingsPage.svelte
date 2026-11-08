@@ -233,7 +233,7 @@
         {/if}
         {#if view.restartRequired.length > 0}
           <p class="restart" role="status">
-            Restart TorrentPlayer to use the new {view.restartRequired
+            Restart Torrent X Player to use the new {view.restartRequired
               .map((path) => RESTART_NAMES[path] ?? path)
               .join(' and ')}.
           </p>
@@ -282,7 +282,7 @@
     height: 100%;
     overflow-y: auto;
     padding: 2rem clamp(1rem, 5vw, 4rem) 3rem;
-    background: linear-gradient(180deg, #17150f 0%, var(--bg) 35%);
+    background: linear-gradient(180deg, #0b1122 0%, var(--bg) 35%);
   }
 
   header {
@@ -367,7 +367,7 @@
   }
 
   .load-error {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .warnings,
@@ -375,7 +375,7 @@
     margin: 0;
     padding: 0.75rem 1rem;
     border-radius: 0.6rem;
-    background: rgb(242 180 90 / 8%);
+    background: rgb(0 229 255 / 8%);
     font-size: 0.85rem;
     line-height: 1.45;
   }
@@ -395,7 +395,7 @@
     display: inline-block;
     padding: 0.4rem 0.9rem;
     border-radius: 999px;
-    background: rgb(21 21 28 / 92%);
+    background: rgb(13 16 34 / 92%);
     box-shadow: 0 4px 18px rgb(0 0 0 / 35%);
     color: var(--text-muted);
     font-size: 0.8rem;
@@ -403,7 +403,7 @@
   }
 
   .toast.error {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   @keyframes fade-in {
@@ -486,7 +486,7 @@
   }
 
   .page :global(input[aria-invalid='true']) {
-    border-color: rgb(232 144 122 / 70%);
+    border-color: rgb(255 92 138 / 70%);
   }
 
   .page :global(input:focus-visible),
@@ -541,8 +541,9 @@
 
   .page :global(.card button.primary) {
     border-color: transparent;
-    background: var(--accent);
-    color: #1a1408;
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
+    color: #00161c;
   }
 
   .page :global(.card button.primary:hover:not(:disabled)) {
@@ -556,7 +557,7 @@
   }
 
   .page :global(.card button.danger-quiet) {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .page :global(.note) {

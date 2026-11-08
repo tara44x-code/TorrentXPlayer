@@ -343,15 +343,22 @@ pub(crate) async fn choose_ffmpeg_dir(
     state: State<'_, MediaToolsState>,
     settings: State<'_, SettingsState>,
 ) -> Result<Option<SettingsView>, IpcError> {
+    #[cfg(desktop)]
     let chosen = rfd::AsyncFileDialog::new()
         .set_title("Choose the folder with ffprobe and ffmpeg")
         .set_parent(&window)
         .pick_folder()
-        .await;
+        .await
+        .map(|folder| folder.path().to_string_lossy().into_owned());
+    // Phones cannot run programs from a chosen folder.
+    #[cfg(mobile)]
+    let chosen: Option<String> = {
+        let _ = &window;
+        None
+    };
     let Some(folder) = chosen else {
         return Ok(None);
     };
-    let folder = folder.path().to_string_lossy().into_owned();
     let patch = serde_json::json!({ "advanced": { "ffmpegDir": folder } });
     let view = settings.update(&app, &patch).await?;
     state.forget();

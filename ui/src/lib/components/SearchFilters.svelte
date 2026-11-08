@@ -177,7 +177,7 @@
   }
 
   .sort.set select {
-    border-color: #4a3f2c;
+    border-color: #1d3b52;
     color: var(--accent);
   }
 
@@ -192,7 +192,7 @@
   .check {
     max-width: 12rem;
     padding: 0.3rem 0.45rem;
-    border: 1px solid #2c2a26;
+    border: 1px solid #1a2138;
     border-radius: 0.45rem;
     background: var(--surface);
     color: var(--text-muted);
@@ -208,12 +208,12 @@
 
   select:focus-visible,
   .check:focus-within {
-    outline: 2px solid rgb(242 180 90 / 50%);
+    outline: 2px solid rgb(0 229 255 / 50%);
     outline-offset: 1px;
   }
 
   .set {
-    border-color: #4a3f2c;
+    border-color: #1d3b52;
     color: var(--accent);
   }
 

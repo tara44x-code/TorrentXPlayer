@@ -37,7 +37,7 @@
   .hint {
     padding: 0.75rem 1rem;
     border-radius: 0.6rem;
-    background: rgb(242 180 90 / 8%);
+    background: rgb(0 229 255 / 8%);
     color: var(--text);
     font-size: 0.85rem;
     line-height: 1.45;
@@ -49,7 +49,7 @@
 
   .error {
     margin-top: 0.4rem;
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .actions {

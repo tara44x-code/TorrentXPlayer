@@ -44,7 +44,8 @@
 
   .switch[aria-checked='true'] {
     border-color: transparent;
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
   }
 
   .switch:disabled {
@@ -71,7 +72,7 @@
 
   .switch[aria-checked='true'] .thumb {
     left: calc(100% - 1.15rem);
-    background: #1a1408;
+    background: #00161c;
   }
 
   @media (prefers-reduced-motion: reduce) {

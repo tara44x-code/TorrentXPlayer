@@ -124,16 +124,16 @@ export function soundVerdict(
 }
 
 /**
- * The note beside a link that opens in the system browser, in a mode that protects TorrentPlayer's
+ * The note beside a link that opens in the system browser, in a mode that protects Torrent X Player's
  * own traffic: the browser does not go through that tunnel or proxy. Null in Direct mode (or while
  * the mode is unknown), where nothing changes.
  */
 export function browserNote(mode: NetworkModeKind | null): string | null {
   switch (mode) {
     case 'wireGuard':
-      return "Opens in your browser, outside TorrentPlayer's WireGuard tunnel.";
+      return "Opens in your browser, outside Torrent X Player's WireGuard tunnel.";
     case 'socks5':
-      return "Opens in your browser, outside TorrentPlayer's SOCKS5 proxy.";
+      return "Opens in your browser, outside Torrent X Player's SOCKS5 proxy.";
     default:
       return null;
   }

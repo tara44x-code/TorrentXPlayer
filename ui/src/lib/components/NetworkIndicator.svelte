@@ -33,7 +33,7 @@
 
   /** Remembered per computer: whether the public address is shown or masked. */
   const REVEAL_KEY = 'torrentplayer.revealIp';
-  /** The key before the rename to TorrentPlayer. */
+  /** The key before the rename to Torrent X Player. */
   const LEGACY_REVEAL_KEY = 'torrentstream.revealIp';
   function readReveal(): boolean {
     try {
@@ -374,7 +374,7 @@
 
   .vpn-button {
     padding: 0.05rem 0.45rem;
-    border: 1px solid rgb(242 180 90 / 35%);
+    border: 1px solid rgb(0 229 255 / 35%);
     border-radius: 0.8rem;
     background: none;
     color: var(--accent);
@@ -385,12 +385,12 @@
 
   .vpn-button:hover,
   .vpn-button[aria-expanded='true'] {
-    background: rgb(242 180 90 / 10%);
+    background: rgb(0 229 255 / 10%);
   }
 
   .vpn-button.removed {
     border-color: rgb(217 96 79 / 50%);
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .vpn-button.removed:hover,
@@ -411,7 +411,7 @@
     width: min(22rem, 80vw);
     border: 1px solid rgb(255 255 255 / 8%);
     border-radius: 0.6rem;
-    background: rgb(22 22 28 / 98%);
+    background: rgb(12 15 32 / 98%);
     box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 40%);
     white-space: normal;
   }
@@ -421,22 +421,22 @@
     width: 0.45rem;
     height: 0.45rem;
     border-radius: 50%;
-    background: #6b6862;
+    background: #5d6a8a;
   }
 
   .protected .dot {
-    background: #57b26f;
+    background: #39ff9f;
   }
 
   .pending .dot {
-    background: #d9b44a;
+    background: #ffd23f;
   }
 
   .blocked .dot {
-    background: #d9604f;
+    background: #ff3d6e;
   }
 
   .blocked .label {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 </style>

@@ -71,7 +71,7 @@
 
   .error {
     margin-top: 0.4rem;
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .actions {

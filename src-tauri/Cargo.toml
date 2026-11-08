@@ -1,6 +1,6 @@
 [package]
 name = "torrentplayer-app"
-description = "TorrentPlayer desktop app shell (Tauri)."
+description = "Torrent X Player app shell (Tauri), for desktop and Android."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,7 +11,8 @@ publish.workspace = true
 
 [lib]
 name = "torrentplayer_app"
-crate-type = ["rlib"]
+# staticlib and cdylib are what the Android build links into the APK.
+crate-type = ["staticlib", "cdylib", "rlib"]
 
 [[bin]]
 name = "torrentplayer"
@@ -37,7 +38,6 @@ torrentplayer-search.workspace = true
 torrentplayer-settings.workspace = true
 torrentplayer-stream.workspace = true
 torrentplayer-torrent.workspace = true
-rfd.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tauri.workspace = true
@@ -48,6 +48,17 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 ts-rs.workspace = true
 url.workspace = true
+
+# The system folder picker exists on desktops only.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+rfd.workspace = true
+
+# Android: HTTPS certificates are checked by the system's verifier, set up through JNI at start
+# (see `lib.rs`). All three are already in the build through reqwest and tao.
+[target.'cfg(target_os = "android")'.dependencies]
+jni = { version = "0.22.4", default-features = false }
+ndk-context = "0.1.1"
+rustls-platform-verifier = "0.7.1"
 
 [target.'cfg(windows)'.dependencies]
 # Lowers WebView2's memory target while the window is minimized (see `window.rs`).

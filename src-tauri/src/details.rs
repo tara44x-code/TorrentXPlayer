@@ -178,6 +178,12 @@ pub(crate) fn openable(link: &str) -> Option<String> {
 )]
 pub(crate) fn open_link(link: String) -> Result<(), IpcError> {
     let link = openable(&link).ok_or_else(|| IpcError::invalid("Only web links can be opened."))?;
+    open_in_browser(&link)
+}
+
+/// Hands `link` to the system browser, as one argument and never through a shell.
+#[cfg(desktop)]
+fn open_in_browser(link: &str) -> Result<(), IpcError> {
     #[cfg(windows)]
     let mut command = {
         let mut c = std::process::Command::new("rundll32.exe");
@@ -193,6 +199,14 @@ pub(crate) fn open_link(link: String) -> Result<(), IpcError> {
         .spawn()
         .map_err(|e| IpcError::internal(&e))?;
     Ok(())
+}
+
+/// Phones have no browser command the app can run.
+#[cfg(mobile)]
+fn open_in_browser(_link: &str) -> Result<(), IpcError> {
+    Err(IpcError::invalid(
+        "Links cannot be opened from the app on this device.",
+    ))
 }
 
 #[cfg(test)]

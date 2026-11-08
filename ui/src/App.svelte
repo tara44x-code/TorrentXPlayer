@@ -1904,7 +1904,7 @@
     pointer-events: auto;
     border: 1px solid rgb(255 255 255 / 8%);
     border-radius: 0.6rem;
-    background: rgb(22 22 28 / 96%);
+    background: rgb(12 15 32 / 96%);
     box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 40%);
     color: var(--text);
     font-size: 0.875rem;
@@ -1948,7 +1948,7 @@
     padding: 0.75rem 0.75rem 0.25rem;
     border: 1px solid rgb(255 255 255 / 8%);
     border-radius: 0.6rem;
-    background: rgb(22 22 28 / 96%);
+    background: rgb(12 15 32 / 96%);
     box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 40%);
     font-size: 0.875rem;
   }
@@ -1966,8 +1966,8 @@
   }
 
   .toast.error {
-    border-color: #6b3a30;
-    color: #e8907a;
+    border-color: #5c1f3a;
+    color: #ff5c8a;
   }
 
   .link {
@@ -2011,5 +2011,17 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+
+  /* Phones: the navigation becomes a tab bar along the bottom. */
+  @media (max-width: 640px) {
+    .app {
+      flex-direction: column-reverse;
+    }
+
+    footer {
+      justify-content: space-between;
+      padding: 0.25rem 0.75rem;
+    }
   }
 </style>

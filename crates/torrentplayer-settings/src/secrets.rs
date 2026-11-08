@@ -9,6 +9,7 @@
 
 use std::collections::HashMap;
 use std::fmt;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use secrecy::zeroize::Zeroize;
@@ -319,6 +320,119 @@ impl SecretStore for KeyringStore {
             None => Ok(()),
         };
         current.and(legacy)
+    }
+}
+
+/// Secrets in a file that only the app can read, for systems without an OS credential store
+/// (Android, where each app's data folder is private to it). The file holds a JSON object from
+/// account names to values, written with owner-only permissions and replaced atomically.
+#[derive(Debug)]
+pub struct FileStore {
+    path: PathBuf,
+    lock: Mutex<()>,
+}
+
+impl FileStore {
+    /// A store kept in the file at `path` (created on the first write).
+    #[must_use]
+    pub fn new(path: impl Into<PathBuf>) -> Self {
+        Self {
+            path: path.into(),
+            lock: Mutex::new(()),
+        }
+    }
+
+    fn load(&self) -> Result<HashMap<String, String>, SecretError> {
+        match std::fs::read(&self.path) {
+            Ok(mut bytes) => {
+                let parsed = serde_json::from_slice(&bytes).map_err(|_| SecretError::Refused);
+                bytes.zeroize();
+                parsed
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(HashMap::new()),
+            Err(_) => Err(SecretError::Refused),
+        }
+    }
+
+    fn save(&self, entries: &HashMap<String, String>) -> Result<(), SecretError> {
+        if let Some(dir) = self.path.parent() {
+            std::fs::create_dir_all(dir).map_err(|_| SecretError::Refused)?;
+        }
+        let mut bytes = serde_json::to_vec(entries).map_err(|_| SecretError::Refused)?;
+        let temporary = self.path.with_extension("tmp");
+        let written = write_private(&temporary, &bytes)
+            .and_then(|()| std::fs::rename(&temporary, &self.path));
+        bytes.zeroize();
+        written.map_err(|_| SecretError::Refused)
+    }
+
+    /// Runs `change` on the entries and saves them, holding the lock throughout.
+    fn change(
+        &self,
+        change: impl FnOnce(&mut HashMap<String, String>),
+    ) -> Result<(), SecretError> {
+        let _guard = self.lock.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut entries = self.load()?;
+        change(&mut entries);
+        let saved = self.save(&entries);
+        wipe(&mut entries);
+        saved
+    }
+}
+
+/// Writes `bytes` to a new file at `path` that only its owner can read.
+fn write_private(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    use std::io::Write as _;
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()
+}
+
+/// Zeroizes every value before the entries are dropped.
+fn wipe(entries: &mut HashMap<String, String>) {
+    for value in entries.values_mut() {
+        value.zeroize();
+    }
+}
+
+impl SecretStore for FileStore {
+    fn available(&self) -> bool {
+        true
+    }
+
+    fn set(&self, key: SecretKey, value: &SecretString) -> Result<(), SecretError> {
+        self.change(|entries| {
+            if let Some(mut old) =
+                entries.insert(key.account().to_owned(), value.expose_secret().to_owned())
+            {
+                old.zeroize();
+            }
+        })
+    }
+
+    fn get(&self, key: SecretKey) -> Result<Option<SecretString>, SecretError> {
+        let _guard = self.lock.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut entries = self.load()?;
+        let secret = entries
+            .get(key.account())
+            .map(|value| SecretString::from(value.as_str()));
+        wipe(&mut entries);
+        Ok(secret)
+    }
+
+    fn clear(&self, key: SecretKey) -> Result<(), SecretError> {
+        self.change(|entries| {
+            if let Some(mut old) = entries.remove(key.account()) {
+                old.zeroize();
+            }
+        })
     }
 }
 

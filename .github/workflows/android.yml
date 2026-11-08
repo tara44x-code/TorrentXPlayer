@@ -1,0 +1,118 @@
+# Builds the Torrent X Player APK for Android phones (arm64) and publishes it as a release.
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Rust toolchain (from rust-toolchain.toml) and the Android target
+        run: |
+          rustup toolchain install
+          rustup target add aarch64-linux-android
+          rustc --version
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: android-arm64
+
+      - name: Android NDK
+        run: |
+          echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+
+      - name: Install UI dependencies
+        working-directory: ui
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate the Android project and icons
+        working-directory: ui
+        run: |
+          npm run tauri -- android init --ci --skip-targets-install
+          npm run tauri -- icon assets/brand/app-icon.png
+
+      - name: Adjust the Android project
+        run: scripts/android-prepare.sh
+
+      - name: Build the APK
+        working-directory: ui
+        run: npm run tauri -- android build --apk --target aarch64 --ci
+
+      - name: Signing key
+        id: key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android-signing
+          key: torrentxplayer-signing-key-v1
+
+      - name: Sign the APK
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.android-signing
+          keystore=~/.android-signing/release.jks
+          if [ -n "${KEYSTORE_B64:-}" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$keystore"
+            password="$KEYSTORE_PASSWORD"
+          else
+            password="torrentxplayer"
+            if [ ! -f "$keystore" ]; then
+              keytool -genkeypair -v -keystore "$keystore" -storepass "$password" -keypass "$password" \
+                -alias torrentxplayer -keyalg RSA -keysize 4096 -validity 10000 \
+                -dname "CN=Torrent X Player, O=Torrent X Player, C=IQ"
+            fi
+          fi
+          unsigned=$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' | head -n 1)
+          echo "Built: $unsigned"
+          test -n "$unsigned"
+          build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
+          "$build_tools/zipalign" -f -p 4 "$unsigned" aligned.apk
+          "$build_tools/apksigner" sign --ks "$keystore" --ks-pass "pass:$password" \
+            --out TorrentXPlayer-arm64.apk aligned.apk
+          "$build_tools/apksigner" verify --print-certs TorrentXPlayer-arm64.apk
+          ls -lh TorrentXPlayer-arm64.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TorrentXPlayer-arm64
+          path: TorrentXPlayer-arm64.apk
+
+      - name: Publish a release with the APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./ui/package.json').version")
+          tag="v${version}-build.${{ github.run_number }}"
+          gh release create "$tag" TorrentXPlayer-arm64.apk \
+            --title "Torrent X Player ${version} (build ${{ github.run_number }})" \
+            --notes "Android APK for arm64 phones. Download TorrentXPlayer-arm64.apk below and open it to install." \
+            --latest

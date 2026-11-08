@@ -13,7 +13,7 @@
 </script>
 
 {#if status === 'restart'}
-  <span class="tag restart" title="Saved now; TorrentPlayer uses it the next time it starts">
+  <span class="tag restart" title="Saved now; Torrent X Player uses it the next time it starts">
     Applies on next start
   </span>
 {:else if status === 'later'}
@@ -34,7 +34,7 @@
   }
 
   .restart {
-    background: rgb(242 180 90 / 12%);
+    background: rgb(0 229 255 / 12%);
     color: var(--accent);
   }
 

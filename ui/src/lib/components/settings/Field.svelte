@@ -72,7 +72,7 @@
   .error {
     grid-column: 1 / -1;
     margin: 0;
-    color: #e8907a;
+    color: #ff5c8a;
     font-size: 0.8rem;
   }
 

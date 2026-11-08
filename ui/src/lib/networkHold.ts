@@ -15,7 +15,7 @@ import { updateSettings } from './ipc';
 
 /** What changed and what to do instead, after an update from the VPN adapter mode. */
 export const REMOVED_MODE_NOTICE =
-  "The VPN adapter mode was removed in 0.3.0. TorrentPlayer now connects directly — keep your VPN app connected, or use the built-in WireGuard mode with your provider's WireGuard configuration to get a kill switch.";
+  "The VPN adapter mode was removed in 0.3.0. Torrent X Player now connects directly — keep your VPN app connected, or use the built-in WireGuard mode with your provider's WireGuard configuration to get a kill switch.";
 
 /** Added while traffic is held (Direct mode) after an update from the VPN adapter mode. */
 export const REMOVED_MODE_HELD =
@@ -23,11 +23,11 @@ export const REMOVED_MODE_HELD =
 
 /** The settings could not be read, and traffic is held (Direct mode). */
 export const UNREADABLE_NOTICE =
-  'Your network settings could not be read, so TorrentPlayer is not connecting. Check Settings → Network & VPN: choose your VPN or proxy again, or connect directly.';
+  'Your network settings could not be read, so Torrent X Player is not connecting. Check Settings → Network & VPN: choose your VPN or proxy again, or connect directly.';
 
 /** The settings could not be read, and another mode has been chosen since. */
 export const UNREADABLE_CHOSEN =
-  'Your network settings could not be read when TorrentPlayer started. Check that the connection in Settings → Network & VPN is the one you want.';
+  'Your network settings could not be read when Torrent X Player started. Check that the connection in Settings → Network & VPN is the one you want.';
 
 /** Added while traffic is held (Direct mode) after the settings could not be read. */
 export const UNREADABLE_HELD =

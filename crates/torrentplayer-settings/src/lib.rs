@@ -29,7 +29,7 @@ pub use model::{
 };
 pub use patch::{MAX_PATCH_BYTES, PatchError, apply_patch};
 pub use secrets::{
-    KEYRING_SERVICE, KeyringStore, LEGACY_KEYRING_SERVICE, MemoryStore, SecretError, SecretKey,
+    FileStore, KEYRING_SERVICE, KeyringStore, LEGACY_KEYRING_SERVICE, MemoryStore, SecretError, SecretKey,
     SecretStatus, SecretStore,
 };
 pub use store::{

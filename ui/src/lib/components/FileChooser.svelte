@@ -181,7 +181,7 @@
   }
 
   li.playing {
-    background: rgb(242 180 90 / 7%);
+    background: rgb(0 229 255 / 7%);
   }
 
   label {
@@ -279,8 +279,9 @@
   .done {
     padding: 0.45rem 1.1rem;
     border-radius: 0.5rem;
-    background: var(--accent);
-    color: #1a1408;
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
+    color: #00161c;
     font-weight: 600;
   }
 </style>

@@ -311,7 +311,8 @@
     height: 0.4rem;
     margin-right: 0.35rem;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
     vertical-align: 0.1em;
     animation: pulse 1.4s ease-in-out infinite;
   }
@@ -342,7 +343,7 @@
 
   li {
     min-width: 0;
-    border: 1px solid #24221e;
+    border: 1px solid #141a2e;
     border-radius: 0.6rem;
     background: var(--surface);
   }
@@ -433,14 +434,14 @@
   }
 
   li.best {
-    border-color: #4a3f2c;
+    border-color: #1d3b52;
   }
 
   .pick {
     margin-right: 0.45rem;
     padding: 0.05rem 0.45rem;
     border-radius: 1rem;
-    background: rgb(242 180 90 / 15%);
+    background: rgb(0 229 255 / 15%);
     color: var(--accent);
     font-size: 0.75rem;
     font-weight: 600;
@@ -498,8 +499,9 @@
     padding: 0.5rem 1rem;
     border: none;
     border-radius: 0.5rem;
-    background: var(--accent);
-    color: #1a1408;
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
+    color: #00161c;
     font: inherit;
     font-weight: 600;
     white-space: nowrap;
@@ -512,7 +514,7 @@
   }
 
   button.secondary {
-    border: 1px solid #3a3731;
+    border: 1px solid #252e49;
     background: transparent;
     color: var(--text);
     font-weight: 500;
@@ -520,7 +522,7 @@
 
   /* Play stands out on the best pick; on the other rows it is quieter. */
   li:not(.best) .actions button:not(.secondary):not(.toggle) {
-    background: rgb(242 180 90 / 85%);
+    background: rgb(0 229 255 / 85%);
   }
 
   .actions {

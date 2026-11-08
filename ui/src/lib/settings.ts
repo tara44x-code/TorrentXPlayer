@@ -217,7 +217,7 @@ export function describeRate(kib: number): string {
 // --- What applies when --------------------------------------------------------------------
 
 /**
- * When a setting takes effect: `live` immediately, `restart` the next time TorrentPlayer starts,
+ * When a setting takes effect: `live` immediately, `restart` the next time Torrent X Player starts,
  * `later` once the feature it controls ships (it is saved now).
  */
 export type Availability = 'live' | 'restart' | 'later';

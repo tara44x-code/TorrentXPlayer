@@ -280,7 +280,7 @@
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
     gap: 0.75rem 1.5rem;
     padding: 0.75rem 0.9rem 0.9rem;
-    border-top: 1px solid #24221e;
+    border-top: 1px solid #141a2e;
     color: var(--text-muted);
     font-size: 0.8125rem;
   }
@@ -340,7 +340,7 @@
   }
 
   .error {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   .note {

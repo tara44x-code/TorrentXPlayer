@@ -75,19 +75,19 @@
     height: 0.45rem;
     margin-right: 0.15rem;
     border-radius: 50%;
-    background: #6b6862;
+    background: #5d6a8a;
     vertical-align: 0.05em;
   }
 
   .health.good {
-    background: #57b26f;
+    background: #39ff9f;
   }
 
   .health.low {
-    background: #d9b44a;
+    background: #ffd23f;
   }
 
   .health.stalled {
-    background: #d9604f;
+    background: #ff3d6e;
   }
 </style>

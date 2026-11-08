@@ -28,6 +28,8 @@ fn show<R: Runtime>(window: &WebviewWindow<R>) {
     if SHOWN.swap(true, Ordering::SeqCst) {
         return;
     }
+    // Phones show the app full screen; there is nothing to center.
+    #[cfg(desktop)]
     if let Err(e) = window.center() {
         tracing::debug!(error = %e, "could not center the window");
     }

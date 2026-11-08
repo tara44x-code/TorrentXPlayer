@@ -221,14 +221,14 @@ export function followPublicIp(onIp: (ip: PublicIp | null) => void): () => void 
 }
 
 /**
- * What the incoming-peers setting does in each mode: where TorrentPlayer listens, and what the user
+ * What the incoming-peers setting does in each mode: where Torrent X Player listens, and what the user
  * may need to do for peers to reach it.
  */
 export const INCOMING_HELP: Record<NetworkModeKind, string> = {
   direct:
-    'Listens on every network interface, so your firewall may ask to allow TorrentPlayer. Behind a router, forward the port or turn on UPnP.',
+    'Listens on every network interface, so your firewall may ask to allow Torrent X Player. Behind a router, forward the port or turn on UPnP.',
   socks5:
-    'Not available with a SOCKS5 proxy: it cannot accept incoming connections, so TorrentPlayer does not listen at all in this mode.',
+    'Not available with a SOCKS5 proxy: it cannot accept incoming connections, so Torrent X Player does not listen at all in this mode.',
   wireGuard:
     'Listens only inside the WireGuard tunnel, never on your own networks. Peers reach it only if your VPN provider forwards this port to your tunnel address.',
 };

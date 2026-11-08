@@ -181,7 +181,7 @@
     min-height: 100%;
     box-sizing: border-box;
     padding: 2.5rem clamp(1rem, 6vw, 5rem);
-    background: linear-gradient(180deg, #17150f 0%, var(--bg) 40%);
+    background: linear-gradient(180deg, #0b1122 0%, var(--bg) 40%);
   }
 
   header {
@@ -256,7 +256,7 @@
 
   button:hover:not(:disabled),
   button:focus-visible {
-    border-color: rgb(242 180 90 / 35%);
+    border-color: rgb(0 229 255 / 35%);
     background: #1b1920;
   }
 
@@ -276,7 +276,7 @@
     height: 2.1rem;
     place-items: center;
     border-radius: 50%;
-    background: rgb(242 180 90 / 12%);
+    background: rgb(0 229 255 / 12%);
     color: var(--accent);
   }
 
@@ -323,7 +323,8 @@
   .bar > span {
     display: block;
     height: 100%;
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
     transition: width 0.4s linear;
   }
 
@@ -411,9 +412,9 @@
   .confirm {
     margin-bottom: 0.75rem;
     padding: 0.8rem;
-    border: 1px solid rgb(232 144 122 / 35%);
+    border: 1px solid rgb(255 92 138 / 35%);
     border-radius: 0.6rem;
-    background: rgb(232 144 122 / 6%);
+    background: rgb(255 92 138 / 6%);
     font-size: 0.85rem;
   }
 
@@ -429,7 +430,7 @@
 
   .confirm .danger,
   .confirm .error {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 
   @media (prefers-reduced-motion: reduce) {

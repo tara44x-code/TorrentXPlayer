@@ -103,7 +103,7 @@
     id="storage-dir"
     label="Download folder"
     path="storage.downloadDir"
-    help="Where TorrentPlayer saves videos, audio, and cached data. Click the location to select it. Existing downloads stay in the old folder."
+    help="Where Torrent X Player saves videos, audio, and cached data. Click the location to select it. Existing downloads stay in the old folder."
     error={errors['storage.downloadDir'] ?? pickError ?? undefined}
   >
     <div class="folder">
@@ -133,7 +133,7 @@
     <Field
       id="storage-active-dir"
       label="Current download folder"
-      help="Downloads continue here until TorrentPlayer restarts. Click the location to select it."
+      help="Downloads continue here until Torrent X Player restarts. Click the location to select it."
     >
       <div class="folder">
         <CopyPath
@@ -298,9 +298,9 @@
   .confirm {
     margin: 0.25rem 0 0.75rem;
     padding: 0.9rem 1rem;
-    border: 1px solid rgb(232 144 122 / 30%);
+    border: 1px solid rgb(255 92 138 / 30%);
     border-radius: 0.6rem;
-    background: rgb(232 144 122 / 6%);
+    background: rgb(255 92 138 / 6%);
   }
 
   .confirm p {

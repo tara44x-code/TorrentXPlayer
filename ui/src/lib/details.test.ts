@@ -128,10 +128,10 @@ describe('toggled', () => {
 describe('links that open in the browser', () => {
   it('say they leave the tunnel or proxy only in a protected mode', () => {
     expect(browserNote('wireGuard')).toBe(
-      "Opens in your browser, outside TorrentPlayer's WireGuard tunnel.",
+      "Opens in your browser, outside Torrent X Player's WireGuard tunnel.",
     );
     expect(browserNote('socks5')).toBe(
-      "Opens in your browser, outside TorrentPlayer's SOCKS5 proxy.",
+      "Opens in your browser, outside Torrent X Player's SOCKS5 proxy.",
     );
     expect(browserNote('direct')).toBeNull();
     expect(browserNote(null)).toBeNull();

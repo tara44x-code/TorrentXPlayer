@@ -112,7 +112,8 @@
 
   .pieces span {
     flex: 1;
-    background: var(--accent);
+    background: var(--accent-fill);
+    box-shadow: var(--glow);
   }
 
   .anchors {
@@ -121,6 +122,6 @@
   }
 
   .error {
-    color: #e8907a;
+    color: #ff5c8a;
   }
 </style>

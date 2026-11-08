@@ -1,12 +1,17 @@
 /* SPDX-License-Identifier: MIT OR Apache-2.0 */
 
+/* Torrent X Player: a dark neon theme (cyan and magenta on deep navy). */
 :root {
-  --bg: #0b0b0f;
-  --surface: #15151c;
-  --text: #ece9e2;
-  --text-muted: #8f8b84;
-  --accent: #f2b45a;
-  --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --bg: #05060f;
+  --surface: #0c1020;
+  --text: #e8f1ff;
+  --text-muted: #8590b0;
+  --accent: #00e5ff;
+  --accent-2: #ff2bd6;
+  --accent-fill: linear-gradient(135deg, #00e5ff 0%, #4d7cff 55%, #ff2bd6 100%);
+  --glow: 0 0 0.55rem rgb(0 229 255 / 55%), 0 0 1.4rem rgb(0 229 255 / 22%);
+  --glow-pink: 0 0 0.55rem rgb(255 43 214 / 55%), 0 0 1.4rem rgb(255 43 214 / 22%);
+  --font-display: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   color-scheme: dark;
@@ -14,6 +19,7 @@
   color: var(--text);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -22,6 +28,32 @@ body {
   height: 100%;
 }
 
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(0 229 255 / 10%), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 100% 110%, rgb(255 43 214 / 8%), transparent 70%),
+    var(--bg);
+  overscroll-behavior: none;
+}
+
+/* Keeps the app clear of the phone's status bar, notch, and gesture bar. */
 #app {
+  box-sizing: border-box;
   height: 100%;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+
+::selection {
+  background: rgb(0 229 255 / 30%);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(0 229 255 / 30%) transparent;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: var(--glow);
 }

@@ -83,7 +83,12 @@ impl Folders {
             tracing::warn!("ignoring {PROFILE_ENV_VAR}: not an absolute path");
         }
         let local_data = app.path().app_local_data_dir()?;
+        // Phones: the shared Downloads folder needs storage permissions, so downloads stay in
+        // the app's own folder.
+        #[cfg(mobile)]
+        let downloads = local_data.join("downloads");
         // Systems without a Downloads folder keep downloads with the app's own data.
+        #[cfg(desktop)]
         let downloads = app.path().download_dir().map_or_else(
             |_| local_data.join("downloads"),
             |dir| dir.join("TorrentPlayer"),
@@ -273,6 +278,44 @@ pub fn run() -> anyhow::Result<()> {
             }
         });
     Ok(())
+}
+
+/// The Android entry point. The macro adds the JNI bindings the app's Java side calls, which
+/// need `unsafe` attributes; nothing else in this module does.
+#[cfg(mobile)]
+#[allow(unsafe_code, missing_docs, clippy::print_stderr)]
+mod mobile {
+    #[tauri::mobile_entry_point]
+    fn start() {
+        #[cfg(target_os = "android")]
+        init_tls_verifier();
+        if let Err(error) = crate::run() {
+            tracing::error!(%error, "Torrent X Player could not start");
+        }
+    }
+
+    /// HTTPS (search, `.torrent` links, web trackers) checks certificates with Android's own
+    /// verifier, which must be handed the app's Java VM and context before the first connection.
+    #[cfg(target_os = "android")]
+    fn init_tls_verifier() {
+        let initialized = std::panic::catch_unwind(|| {
+            // tao records the Java VM and the activity in ndk-context before starting the app.
+            let context = ndk_context::android_context();
+            // SAFETY: the pointer is the process's Java VM, valid for the life of the process.
+            let vm = unsafe { jni::JavaVM::from_raw(context.vm().cast::<jni::sys::JavaVM>()) };
+            vm.attach_current_thread(|env| -> Result<(), jni::errors::Error> {
+                // SAFETY: a global reference to the activity, valid on any thread.
+                let activity =
+                    unsafe { jni::objects::JObject::from_raw(env, context.context().cast()) };
+                rustls_platform_verifier::android::init_with_env(env, activity)
+            })
+        });
+        match initialized {
+            Ok(Ok(())) => tracing::info!("certificate verifier ready"),
+            Ok(Err(error)) => tracing::error!(%error, "could not set up certificate checks"),
+            Err(_) => tracing::error!("could not reach the Android context for certificate checks"),
+        }
+    }
 }
 
 /// The longest TorrentPlayer waits for final progress and engine cleanup when it exits.
