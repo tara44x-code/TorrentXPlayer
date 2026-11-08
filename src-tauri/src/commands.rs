@@ -59,7 +59,7 @@ impl AppInfo {
     #[must_use]
     pub fn current() -> Self {
         Self {
-            name: "TorrentPlayer".to_owned(),
+            name: "Torrent X Player".to_owned(),
             version: env!("CARGO_PKG_VERSION").to_owned(),
             license: env!("CARGO_PKG_LICENSE").to_owned(),
         }
@@ -767,7 +767,7 @@ mod tests {
     #[test]
     fn app_info_matches_package_metadata() {
         let info = AppInfo::current();
-        assert_eq!(info.name, "TorrentPlayer");
+        assert_eq!(info.name, "Torrent X Player");
         assert_eq!(info.version, env!("CARGO_PKG_VERSION"));
         assert_eq!(info.license, "MIT OR Apache-2.0");
     }

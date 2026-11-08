@@ -5,6 +5,15 @@
 TorrentPlayer is licensed under MIT OR Apache-2.0. It includes the third-party software listed below,
 each under its own license.
 
+## Android player (Torrent X Player)
+
+The Android app's built-in player uses [libVLC for Android](https://code.videolan.org/videolan/vlc-android)
+(`org.videolan.android:libvlc-all`) by VideoLAN, licensed under the GNU Lesser General Public
+License, version 2.1 or later. libVLC is included as unmodified shared libraries, which can be
+replaced; its source code is available from VideoLAN at https://code.videolan.org/videolan/.
+HTTPS certificate checks use the Android component of
+[rustls-platform-verifier](https://github.com/rustls/rustls-platform-verifier) (MIT OR Apache-2.0).
+
 ## Frontend runtime packages
 
 The bundled user interface includes [Svelte](https://github.com/sveltejs/svelte) (MIT) and

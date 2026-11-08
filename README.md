@@ -20,7 +20,8 @@ asks). It runs on arm64 phones with Android 7.0 or newer. There is no iPhone ver
 
 - Downloads are kept in the app's own storage (Android does not let apps write to the shared
   Downloads folder without extra permissions). Uninstalling the app removes them.
-- Dolby/DTS audio conversion and the optional FFmpeg tools are desktop-only.
+- Videos play in a built-in player powered by libVLC (any format, Dolby/DTS audio, embedded
+  subtitles), which opens by itself when a stream starts.
 - WireGuard keys and the proxy password are stored in a private file inside the app's folder.
 - Links to indexer web pages cannot be opened from the app.
 

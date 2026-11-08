@@ -242,6 +242,7 @@ pub fn run() -> anyhow::Result<()> {
             details::torrent_details,
             details::open_link,
             external::open_in_player,
+            external::play_in_app,
             preload::preload_status,
             queue::load_queue,
             queue::save_queue,

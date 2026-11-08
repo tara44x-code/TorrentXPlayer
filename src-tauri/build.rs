@@ -31,6 +31,7 @@ fn main() {
             "torrent_details",
             "open_link",
             "open_in_player",
+            "play_in_app",
             "preload_status",
             "load_queue",
             "save_queue",

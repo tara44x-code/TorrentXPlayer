@@ -434,6 +434,11 @@ export function openInPlayer(url: string): Promise<void> {
   return invoke<undefined>('open_in_player', { url });
 }
 
+/** Plays a stream URL of this app in the built-in libVLC player screen (Android only). */
+export function playInApp(url: string, title: string): Promise<void> {
+  return invoke<undefined>('play_in_app', { url, title });
+}
+
 /** Whether the app runs on Android, where streams can be handed to another player. */
 export const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
 

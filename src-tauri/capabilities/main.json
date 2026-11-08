@@ -28,6 +28,7 @@
     "allow-torrent-details",
     "allow-open-link",
     "allow-open-in-player",
+    "allow-play-in-app",
     "allow-preload-status",
     "allow-load-queue",
     "allow-save-queue",

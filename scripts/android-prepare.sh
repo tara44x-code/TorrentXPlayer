@@ -29,19 +29,37 @@ dependencies {
 }
 GRADLE
 
+# libVLC (LGPL-2.1+) for the built-in player: the newest 3.x release on Maven Central.
+libvlc_version=$(curl -fsSL https://repo1.maven.org/maven2/org/videolan/android/libvlc-all/maven-metadata.xml \
+  | grep -o '<version>3\.[0-9]*\.[0-9]*</version>' | sed 's/<[^>]*>//g' | sort -V | tail -n 1 || true)
+libvlc_version=${libvlc_version:-3.6.0}
+echo "libVLC $libvlc_version"
+cat >> "$gradle" <<GRADLE
+
+// Torrent X Player: libVLC powers the built-in player (PlayerActivity).
+dependencies {
+    implementation("org.videolan.android:libvlc-all:$libvlc_version")
+}
+GRADLE
+
 cat >> "$app/proguard-rules.pro" <<'RULES'
 
 # Torrent X Player: called from Rust through JNI only.
 -keep, includedescriptorclasses class org.rustls.platformverifier.** { *; }
+# libVLC calls into its Java classes from native code.
+-keep class org.videolan.libvlc.** { *; }
 RULES
 
 # A foreground service keeps the stream server alive while VLC plays in front.
 kotlin_dir="$app/src/main/java/com/tara44x/torrentxplayer"
 test -f "$kotlin_dir/MainActivity.kt"
-cp "$root/android/kotlin/MainActivity.kt" "$root/android/kotlin/StreamService.kt" "$kotlin_dir/"
+cp "$root/android/kotlin/MainActivity.kt" "$root/android/kotlin/StreamService.kt" \
+  "$root/android/kotlin/PlayerActivity.kt" "$kotlin_dir/"
 manifest="$app/src/main/AndroidManifest.xml"
 sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|&\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />|' "$manifest"
 sed -i 's|</application>|    <service android:name=".StreamService" android:exported="false" android:foregroundServiceType="mediaPlayback" android:stopWithTask="true" />\n    </application>|' "$manifest"
+sed -i 's|</application>|    <activity android:name=".PlayerActivity" android:exported="false" android:configChanges="orientation\|screenSize\|smallestScreenSize\|screenLayout\|keyboardHidden\|uiMode" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />\n    </application>|' "$manifest"
+grep -q 'android:name=".PlayerActivity"' "$manifest"
 grep -q 'FOREGROUND_SERVICE_MEDIA_PLAYBACK' "$manifest"
 grep -q 'android:name=".StreamService"' "$manifest"
 

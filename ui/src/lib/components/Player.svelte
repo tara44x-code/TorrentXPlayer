@@ -29,7 +29,7 @@
     streamStats,
     streamSubtitles,
     IS_ANDROID,
-    openInPlayer,
+    playInApp,
     type NetworkStatus,
     type Settings,
   } from '../ipc';
@@ -134,17 +134,33 @@
   let playbackError = $state<string | null>(null);
   /** Why handing the stream to another player failed, if it did (Android). */
   let externalError = $state<string | null>(null);
+  /** Whether the VLC player has this stream: the web player stays paused until the user plays. */
+  let handedToVlc = false;
 
-  /** Hands this stream to another player app (VLC, ...), which plays it as it downloads. */
+  /**
+   * Plays this stream in the built-in libVLC player screen (Android), which plays any format as
+   * it downloads. The web player stays paused behind it.
+   */
   async function openExternal(): Promise<void> {
+    handedToVlc = true;
     video?.pause();
     externalError = null;
     try {
-      await openInPlayer(stream.url);
+      await playInApp(stream.url, stream.fileName);
     } catch (error) {
       externalError = errorMessage(error);
     }
   }
+
+  /** Streams already handed to the VLC player, so each opens it once by itself. */
+  const vlcOpened = new Set<string>();
+  $effect(() => {
+    const url = stream.url;
+    if (IS_ANDROID && !vlcOpened.has(url)) {
+      vlcOpened.add(url);
+      void openExternal();
+    }
+  });
   let stats = $state<StreamStats | null>(null);
   let statsError = $state<string | null>(null);
   let seekHolding = $state(false);
@@ -744,6 +760,7 @@
   }
 
   function togglePlay(): void {
+    handedToVlc = false;
     dismissChip();
     if (!video) {
       return;
@@ -1034,6 +1051,10 @@
     onclick={togglePlay}
     ondblclick={toggleFullscreen}
     onplay={() => {
+      if (handedToVlc) {
+        video?.pause();
+        return;
+      }
       paused = false;
       onPauseChange?.(false);
       ended = false;
@@ -1143,7 +1164,7 @@
       }
       const code = video?.error?.code;
       playbackError = IS_ANDROID
-        ? `This video can't play inside the app${code ? ` (error ${code})` : ''}. Tap “Open in VLC” to watch it there while it downloads.`
+        ? `This video can't play inside the app${code ? ` (error ${code})` : ''}. Tap “Play with VLC” to watch it in the VLC player.`
         : "The built-in player can't play this format. It keeps downloading; once done you can open it in another player such as VLC.";
     }}
   ></video>
@@ -1152,7 +1173,7 @@
     <span class="title">{stream.fileName}</span>
     {#if IS_ANDROID}
       <button type="button" class="external" onclick={() => void openExternal()}>
-        Open in VLC
+        ▶ VLC Player
       </button>
     {/if}
   </div>
@@ -1161,7 +1182,7 @@
     <div class="external-cta">
       {#if playbackError !== null}
         <button type="button" class="external big" onclick={() => void openExternal()}>
-          ▶ Open in VLC
+          ▶ Play with VLC
         </button>
       {/if}
       {#if externalError !== null}

@@ -38,8 +38,10 @@
     <dd>{info ? `${info.name} ${info.version}` : '…'}</dd>
     <dt>License</dt>
     <dd>{info?.license ?? 'MIT OR Apache-2.0'} — free and open source</dd>
-    <dt>Website</dt>
-    <dd>torrentplayer.io</dd>
+    <dt>Developer</dt>
+    <dd class="developer"><span dir="rtl">مهند سات لنك</span> <span class="devil" aria-hidden="true">😈</span></dd>
+    <dt>Based on</dt>
+    <dd>TorrentPlayer (torrentplayer.io) · Video engine: VLC (libVLC)</dd>
   </dl>
   <h4>Third-party software</h4>
   <p class="intro">
@@ -127,5 +129,35 @@
 
   .notices:focus-visible {
     outline: 2px solid var(--accent);
+  }
+
+  .developer {
+    color: var(--accent);
+    font-weight: 700;
+    text-shadow: 0 0 0.5rem rgb(0 229 255 / 55%);
+  }
+
+  .devil {
+    display: inline-block;
+    font-size: 1.35em;
+    filter: drop-shadow(0 0 0.4rem rgb(255 43 214 / 75%));
+    animation: devil-wiggle 2.4s ease-in-out infinite;
+  }
+
+  @keyframes devil-wiggle {
+    0%,
+    80%,
+    100% {
+      transform: rotate(0deg) scale(1);
+    }
+    85% {
+      transform: rotate(-14deg) scale(1.15);
+    }
+    90% {
+      transform: rotate(12deg) scale(1.15);
+    }
+    95% {
+      transform: rotate(-6deg) scale(1.05);
+    }
   }
 </style>
