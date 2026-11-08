@@ -50,9 +50,14 @@ pub(crate) fn play_in_app(url: String, title: String) -> Result<(), IpcError> {
 
 #[cfg(target_os = "android")]
 fn play(url: &str, title: &str) -> Result<(), IpcError> {
-    android::launch(url, Some(title)).map_err(|error| {
-        tracing::warn!(%error, "could not open the built-in player");
-        IpcError::invalid("The built-in player could not open.")
+    let Err(error) = android::launch(url, Some(title)) else {
+        return Ok(());
+    };
+    tracing::warn!(%error, "could not open the built-in player; trying another app");
+    // Still let the video play: hand it to an installed player app instead.
+    android::launch(url, None).map_err(|other| {
+        tracing::warn!(error = %other, "could not open another player either");
+        IpcError::invalid(format!("The built-in player could not open ({error})."))
     })
 }
 
@@ -127,6 +132,14 @@ mod android {
                 jni_str!("setClassName"),
                 jni_sig!("(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;"),
                 &[(&package).into(), (&class).into()],
+            )?;
+            // The context ndk-context holds may be the application rather than the activity,
+            // which can start activities only into a task of their own.
+            env.call_method(
+                &intent,
+                jni_str!("addFlags"),
+                jni_sig!("(I)Landroid/content/Intent;"),
+                &[JValue::Int(FLAG_ACTIVITY_NEW_TASK)],
             )?;
             for (key, value) in [("url", url), ("title", title)] {
                 let key = env.new_string(key)?;
