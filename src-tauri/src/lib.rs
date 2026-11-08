@@ -21,6 +21,7 @@ mod core;
 mod details;
 mod downloads;
 mod error;
+mod external;
 mod latest;
 mod library;
 mod media;
@@ -240,6 +241,7 @@ pub fn run() -> anyhow::Result<()> {
             thumbnails::preview_frame,
             details::torrent_details,
             details::open_link,
+            external::open_in_player,
             preload::preload_status,
             queue::load_queue,
             queue::save_queue,

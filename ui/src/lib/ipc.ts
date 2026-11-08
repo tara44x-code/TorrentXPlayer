@@ -429,6 +429,14 @@ export function openLink(link: string): Promise<void> {
   return invoke<undefined>('open_link', { link });
 }
 
+/** Hands a stream URL of this app to another player app (Android only; VLC and others). */
+export function openInPlayer(url: string): Promise<void> {
+  return invoke<undefined>('open_in_player', { url });
+}
+
+/** Whether the app runs on Android, where streams can be handed to another player. */
+export const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+
 /** The current preload of a search's best pick, or null if there is none. */
 export function preloadStatus(): Promise<PreloadStatusDto | null> {
   return invoke<PreloadStatusDto | null>('preload_status');

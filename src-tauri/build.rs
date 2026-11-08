@@ -30,6 +30,7 @@ fn main() {
             "preview_frame",
             "torrent_details",
             "open_link",
+            "open_in_player",
             "preload_status",
             "load_queue",
             "save_queue",

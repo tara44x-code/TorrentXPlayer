@@ -27,6 +27,7 @@
     "allow-preview-frame",
     "allow-torrent-details",
     "allow-open-link",
+    "allow-open-in-player",
     "allow-preload-status",
     "allow-load-queue",
     "allow-save-queue",

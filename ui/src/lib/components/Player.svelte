@@ -28,6 +28,8 @@
     streamAudio,
     streamStats,
     streamSubtitles,
+    IS_ANDROID,
+    openInPlayer,
     type NetworkStatus,
     type Settings,
   } from '../ipc';
@@ -130,6 +132,19 @@
   let showDebug = $state(false);
   let needsClick = $state(false);
   let playbackError = $state<string | null>(null);
+  /** Why handing the stream to another player failed, if it did (Android). */
+  let externalError = $state<string | null>(null);
+
+  /** Hands this stream to another player app (VLC, ...), which plays it as it downloads. */
+  async function openExternal(): Promise<void> {
+    video?.pause();
+    externalError = null;
+    try {
+      await openInPlayer(stream.url);
+    } catch (error) {
+      externalError = errorMessage(error);
+    }
+  }
   let stats = $state<StreamStats | null>(null);
   let statsError = $state<string | null>(null);
   let seekHolding = $state(false);
@@ -1126,14 +1141,34 @@
         stopConversion();
         return;
       }
-      playbackError =
-        "The built-in player can't play this format. It keeps downloading; once done you can open it in another player such as VLC.";
+      const code = video?.error?.code;
+      playbackError = IS_ANDROID
+        ? `This video can't play inside the app${code ? ` (error ${code})` : ''}. Tap “Open in VLC” to watch it there while it downloads.`
+        : "The built-in player can't play this format. It keeps downloading; once done you can open it in another player such as VLC.";
     }}
   ></video>
 
   <div class="topbar" class:visible={controlsVisible}>
     <span class="title">{stream.fileName}</span>
+    {#if IS_ANDROID}
+      <button type="button" class="external" onclick={() => void openExternal()}>
+        Open in VLC
+      </button>
+    {/if}
   </div>
+
+  {#if IS_ANDROID && (playbackError !== null || externalError !== null)}
+    <div class="external-cta">
+      {#if playbackError !== null}
+        <button type="button" class="external big" onclick={() => void openExternal()}>
+          ▶ Open in VLC
+        </button>
+      {/if}
+      {#if externalError !== null}
+        <p>{externalError}</p>
+      {/if}
+    </div>
+  {/if}
 
   {#if status}
     <div class="pill" aria-hidden="true">{status}</div>
@@ -1440,6 +1475,62 @@
 
   .topbar.visible {
     opacity: 1;
+  }
+
+  .topbar {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .topbar .title {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .external {
+    flex: none;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid rgb(0 229 255 / 60%);
+    border-radius: 2rem;
+    background: rgb(0 229 255 / 12%);
+    box-shadow: var(--glow);
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .topbar.visible .external {
+    pointer-events: auto;
+  }
+
+  .external-cta {
+    position: absolute;
+    top: calc(50% + 4.5rem);
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 85%;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+
+  .external-cta p {
+    margin: 0;
+    color: #ff5c8a;
+    font-size: 0.85rem;
+  }
+
+  .external.big {
+    padding: 0.8rem 1.6rem;
+    border: none;
+    background: var(--accent-fill);
+    color: #00161c;
+    font-size: 1rem;
   }
 
   .title {
