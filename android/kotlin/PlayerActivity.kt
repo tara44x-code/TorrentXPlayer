@@ -2,6 +2,9 @@ package com.tara44x.torrentxplayer
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -14,18 +17,28 @@ import android.os.Looper
 import android.text.TextUtils
 import android.util.Log
 import android.util.TypedValue
+import android.view.GestureDetector
 import android.view.Gravity
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
+import java.io.File
+import java.io.IOException
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
+import org.videolan.libvlc.interfaces.IMedia
 import org.videolan.libvlc.util.VLCVideoLayout
 
 /**
@@ -50,6 +63,13 @@ class PlayerActivity : Activity() {
   private var dragging = false
   private var lengthMs = 0L
   private var ended = false
+  private var resumeAfterPause = false
+  private var videoTitle = ""
+  private var scaleIndex = DEFAULT_SCALE
+  private lateinit var prefs: SharedPreferences
+  private lateinit var scaleButton: TextView
+  private lateinit var infoText: TextView
+  private val hideInfo = Runnable { infoText.visibility = View.GONE }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -63,6 +83,9 @@ class PlayerActivity : Activity() {
       return
     }
     val title = intent.getStringExtra(EXTRA_TITLE) ?: "Torrent X Player"
+    videoTitle = title
+    prefs = getSharedPreferences("player", Context.MODE_PRIVATE)
+    scaleIndex = prefs.getInt(KEY_SCALE, DEFAULT_SCALE).coerceIn(0, SCALES.size - 1)
     setContentView(buildUi(title))
 
     try {
@@ -77,6 +100,7 @@ class PlayerActivity : Activity() {
       mediaPlayer.setEventListener { event -> onPlayerEvent(event) }
       libVlc = vlc
       player = mediaPlayer
+      applyScale(announce = false)
       mediaPlayer.play()
     } catch (e: Throwable) {
       Log.e(TAG, "could not start the player", e)
@@ -88,11 +112,37 @@ class PlayerActivity : Activity() {
   override fun onResume() {
     super.onResume()
     goFullscreen()
+    if (resumeAfterPause) {
+      resumeAfterPause = false
+      player?.play()
+    }
   }
 
   override fun onPause() {
     super.onPause()
+    resumeAfterPause = player?.isPlaying == true
     player?.pause()
+  }
+
+  @Deprecated("Activity result API of the platform Activity")
+  @Suppress("DEPRECATION")
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    if (requestCode != PICK_SUBTITLE || resultCode != RESULT_OK) return
+    val uri = data?.data ?: return
+    val language = preferredLanguage()
+    Thread {
+      try {
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+          ?: throw IOException("the file cannot be read")
+        if (bytes.size > 8 * 1024 * 1024) throw IOException("the file is too large")
+        val name = uri.lastPathSegment ?: "subtitle.srt"
+        val (text, ext) = SubtitleSources.extract(bytes, name, language)
+        runOnUiThread { addSubtitle(text, ext) }
+      } catch (e: Exception) {
+        runOnUiThread { toast("Could not load the subtitle: ${e.message}") }
+      }
+    }.start()
   }
 
   override fun onDestroy() {
@@ -187,6 +237,220 @@ class PlayerActivity : Activity() {
     poke()
   }
 
+  private fun dialog(): AlertDialog.Builder =
+    AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+
+  private fun toast(text: String) {
+    Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+  }
+
+  /** The subtitle menu: the video's own tracks, then loading from the device or online. */
+  private fun chooseSubtitles() {
+    val mediaPlayer = player ?: return
+    val tracks = mediaPlayer.spuTracks ?: emptyArray()
+    val current = mediaPlayer.spuTrack
+    val items = ArrayList<CharSequence>()
+    tracks.forEach { items.add(it.name ?: "Track ${it.id}") }
+    val firstAction = items.size
+    items.add("📁  Load from device…")
+    items.add("🌐  Search online…")
+    val checked = tracks.indexOfFirst { it.id == current }
+    dialog()
+      .setTitle("Subtitles")
+      .setSingleChoiceItems(items.toTypedArray(), checked) { box, which ->
+        box.dismiss()
+        when {
+          which < firstAction -> mediaPlayer.setSpuTrack(tracks[which].id)
+          which == firstAction -> pickSubtitleFile()
+          else -> searchOnline()
+        }
+      }
+      .show()
+    poke()
+  }
+
+  @Suppress("DEPRECATION")
+  private fun pickSubtitleFile() {
+    val picker = Intent(Intent.ACTION_OPEN_DOCUMENT)
+      .addCategory(Intent.CATEGORY_OPENABLE)
+      .setType("*/*")
+    try {
+      startActivityForResult(picker, PICK_SUBTITLE)
+    } catch (e: Exception) {
+      toast("No file picker is available on this device.")
+    }
+  }
+
+  private fun preferredLanguage(): String = prefs.getString(KEY_LANGUAGE, "ar") ?: "ar"
+
+  /** Adds a subtitle file (UTF-8 bytes) to the playing video and shows it. */
+  private fun addSubtitle(text: ByteArray, ext: String) {
+    val mediaPlayer = player ?: return
+    try {
+      val dir = File(cacheDir, "subtitles").apply { mkdirs() }
+      val file = File(dir, "sub-${System.currentTimeMillis()}.$ext")
+      file.writeBytes(text)
+      if (mediaPlayer.addSlave(IMedia.Slave.Type.Subtitle, Uri.fromFile(file), true)) {
+        toast("Subtitle added ✓")
+      } else {
+        toast("The player could not use this subtitle.")
+      }
+    } catch (e: Exception) {
+      toast("Could not add the subtitle: ${e.message}")
+    }
+  }
+
+  /** Online search: the title guessed from the file name, in the chosen language. */
+  private fun searchOnline() {
+    val guess = SubtitleSources.guess(videoTitle)
+    val builder = dialog()
+    val ctx = builder.context
+    val layout = LinearLayout(ctx).apply {
+      orientation = LinearLayout.VERTICAL
+      setPadding(dp(22), dp(8), dp(22), 0)
+    }
+    val queryInput = EditText(ctx).apply {
+      setText(guess.title)
+      setSingleLine()
+      hint = "Movie or series name"
+    }
+    val languages = SubtitleSources.LANGUAGES
+    val spinner = Spinner(ctx).apply {
+      adapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, languages.map { it.name })
+      setSelection(languages.indexOfFirst { it.code == preferredLanguage() }.coerceAtLeast(0))
+    }
+    val sources = mutableListOf("Podnapisi")
+    if (!prefs.getString(KEY_SUBDL, null).isNullOrBlank()) sources += "SubDL"
+    if (!prefs.getString(KEY_OPENSUBTITLES, null).isNullOrBlank()) sources += "OpenSubtitles"
+    val details = listOfNotNull(
+      guess.year?.let { "Year $it" },
+      if (guess.season != null && guess.episode != null) "S${guess.season} E${guess.episode}" else null,
+    ).joinToString(" · ")
+    val note = TextView(ctx).apply {
+      text = buildString {
+        if (details.isNotEmpty()) append(details).append('\n')
+        append("Sources: ").append(sources.joinToString(", "))
+        if (sources.size < 3) append("\nAdd free API keys for SubDL and OpenSubtitles to search more sites.")
+      }
+      setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+      setPadding(0, dp(10), 0, 0)
+    }
+    layout.addView(queryInput)
+    layout.addView(spinner)
+    layout.addView(note)
+    builder
+      .setTitle("Search subtitles online")
+      .setView(layout)
+      .setPositiveButton("Search") { _, _ ->
+        val language = languages[spinner.selectedItemPosition].code
+        prefs.edit().putString(KEY_LANGUAGE, language).apply()
+        val title = queryInput.text.toString().trim().ifEmpty { guess.title }
+        runSearch(guess.copy(title = title), language)
+      }
+      .setNeutralButton("API keys") { _, _ -> editKeys() }
+      .setNegativeButton("Cancel", null)
+      .show()
+  }
+
+  private fun runSearch(guess: VideoGuess, language: String) {
+    val progress = dialog()
+      .setTitle("Searching…")
+      .setMessage("Looking for \"${guess.title}\" on subtitle sites")
+      .show()
+    val subdlKey = prefs.getString(KEY_SUBDL, null)
+    val openSubtitlesKey = prefs.getString(KEY_OPENSUBTITLES, null)
+    Thread {
+      val (results, errors) = SubtitleSources.search(guess, language, subdlKey, openSubtitlesKey)
+      runOnUiThread {
+        progress.dismiss()
+        if (isFinishing || isDestroyed) return@runOnUiThread
+        if (results.isEmpty()) {
+          val why = if (errors.isEmpty()) "" else "\n\n" + errors.joinToString("\n")
+          dialog()
+            .setTitle("No subtitles found")
+            .setMessage("Try a shorter name or another language.$why")
+            .setPositiveButton("Search again") { _, _ -> searchOnline() }
+            .setNegativeButton("Close", null)
+            .show()
+          return@runOnUiThread
+        }
+        val labels = Array<CharSequence>(results.size) { i -> "[${results[i].source}]  ${results[i].label}" }
+        dialog()
+          .setTitle("${results.size} subtitles found")
+          .setItems(labels) { _, which -> downloadSubtitle(results[which], language) }
+          .setNegativeButton("Close", null)
+          .show()
+      }
+    }.start()
+  }
+
+  private fun downloadSubtitle(result: SubResult, language: String) {
+    toast("Downloading subtitle…")
+    Thread {
+      try {
+        val bytes = result.download()
+        val (text, ext) = SubtitleSources.extract(bytes, result.label, language)
+        runOnUiThread { addSubtitle(text, ext) }
+      } catch (e: Exception) {
+        runOnUiThread { toast("Download failed: ${e.message}") }
+      }
+    }.start()
+  }
+
+  private fun editKeys() {
+    val builder = dialog()
+    val ctx = builder.context
+    val layout = LinearLayout(ctx).apply {
+      orientation = LinearLayout.VERTICAL
+      setPadding(dp(22), dp(8), dp(22), 0)
+    }
+    val subdl = EditText(ctx).apply {
+      setSingleLine()
+      hint = "SubDL API key (subdl.com → Panel → API)"
+      setText(prefs.getString(KEY_SUBDL, ""))
+    }
+    val openSubtitles = EditText(ctx).apply {
+      setSingleLine()
+      hint = "OpenSubtitles.com API key (Consumers)"
+      setText(prefs.getString(KEY_OPENSUBTITLES, ""))
+    }
+    layout.addView(subdl)
+    layout.addView(openSubtitles)
+    builder
+      .setTitle("Subtitle site keys (free)")
+      .setView(layout)
+      .setPositiveButton("Save") { _, _ ->
+        prefs.edit()
+          .putString(KEY_SUBDL, subdl.text.toString().trim())
+          .putString(KEY_OPENSUBTITLES, openSubtitles.text.toString().trim())
+          .apply()
+        toast("Saved")
+        searchOnline()
+      }
+      .setNegativeButton("Cancel", null)
+      .show()
+  }
+
+  /** Applies the current screen mode (fit, fill, stretch, ...) and remembers it. */
+  private fun applyScale(announce: Boolean = true) {
+    val (scale, label) = SCALES[scaleIndex]
+    player?.videoScale = scale
+    prefs.edit().putInt(KEY_SCALE, scaleIndex).apply()
+    if (this::scaleButton.isInitialized) scaleButton.text = "⛶ $label"
+    if (announce) {
+      infoText.text = label
+      infoText.visibility = View.VISIBLE
+      handler.removeCallbacks(hideInfo)
+      handler.postDelayed(hideInfo, 1200)
+    }
+  }
+
+  private fun setScale(index: Int) {
+    if (index == scaleIndex) return
+    scaleIndex = index
+    applyScale()
+  }
+
   private fun updateTime(timeMs: Long) {
     if (lengthMs > 0) {
       seekBar.max = (lengthMs / 1000).toInt()
@@ -259,12 +523,57 @@ class PlayerActivity : Activity() {
     root.addView(videoLayout, FrameLayout.LayoutParams(MATCH, MATCH))
 
     // Tapping the video shows or hides the controls.
-    val tapCatcher = View(this).apply {
-      setOnClickListener {
+    // Tap: show or hide the controls. Double tap: fit / fill screen. Pinch: fill or fit.
+    val taps = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+      override fun onDown(e: MotionEvent): Boolean = true
+
+      override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
         if (controls.visibility == View.VISIBLE) setControlsVisible(false) else poke()
+        return true
       }
+
+      override fun onDoubleTap(e: MotionEvent): Boolean {
+        setScale(if (scaleIndex == SCALE_FILL_SCREEN) SCALE_FIT else SCALE_FILL_SCREEN)
+        return true
+      }
+    })
+    var pinch = 1f
+    val pinches = ScaleGestureDetector(this, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+      override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+        pinch = 1f
+        return true
+      }
+
+      override fun onScale(detector: ScaleGestureDetector): Boolean {
+        pinch *= detector.scaleFactor
+        return true
+      }
+
+      override fun onScaleEnd(detector: ScaleGestureDetector) {
+        if (pinch > 1.12f) setScale(SCALE_FILL_SCREEN) else if (pinch < 0.9f) setScale(SCALE_FIT)
+      }
+    })
+    val tapCatcher = View(this)
+    tapCatcher.setOnTouchListener { _, event ->
+      pinches.onTouchEvent(event)
+      if (!pinches.isInProgress) taps.onTouchEvent(event)
+      true
     }
     root.addView(tapCatcher, FrameLayout.LayoutParams(MATCH, MATCH))
+
+    infoText = TextView(this).apply {
+      setTextColor(CYAN)
+      setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
+      typeface = Typeface.DEFAULT_BOLD
+      setShadowLayer(16f, 0f, 0f, CYAN)
+      setPadding(dp(18), dp(8), dp(18), dp(8))
+      background = GradientDrawable().apply {
+        cornerRadius = dp(22).toFloat()
+        setColor(Color.argb(170, 5, 6, 15))
+      }
+      visibility = View.GONE
+    }
+    root.addView(infoText, FrameLayout.LayoutParams(WRAP, WRAP, Gravity.CENTER))
 
     spinner = ProgressBar(this).apply {
       isIndeterminate = true
@@ -347,7 +656,13 @@ class PlayerActivity : Activity() {
       addView(neonButton("10 ⟳") { skip(10_000) }, gap)
       addView(timeText, LinearLayout.LayoutParams(0, WRAP, 1f).apply { marginStart = dp(8) })
       addView(neonButton("Audio") { chooseTrack(audio = true) }, gap)
-      addView(neonButton("Subtitles") { chooseTrack(audio = false) })
+      addView(neonButton("Subtitles") { chooseSubtitles() }, gap)
+      scaleButton = neonButton("⛶ ${SCALES[scaleIndex].second}") {
+        scaleIndex = (scaleIndex + 1) % SCALES.size
+        applyScale()
+        poke()
+      }
+      addView(scaleButton)
     }
 
     controls = LinearLayout(this).apply {
@@ -367,6 +682,26 @@ class PlayerActivity : Activity() {
   companion object {
     const val EXTRA_URL = "url"
     const val EXTRA_TITLE = "title"
+    private const val PICK_SUBTITLE = 41
+    private const val KEY_SCALE = "scale"
+    private const val KEY_LANGUAGE = "subtitle_language"
+    private const val KEY_SUBDL = "subdl_key"
+    private const val KEY_OPENSUBTITLES = "opensubtitles_key"
+
+    /** Screen modes, in the order the ⛶ button cycles through them. */
+    private val SCALES = listOf(
+      MediaPlayer.ScaleType.SURFACE_BEST_FIT to "Fit",
+      MediaPlayer.ScaleType.SURFACE_FIT_SCREEN to "Fill",
+      MediaPlayer.ScaleType.SURFACE_FILL to "Stretch",
+      MediaPlayer.ScaleType.SURFACE_16_9 to "16:9",
+      MediaPlayer.ScaleType.SURFACE_4_3 to "4:3",
+      MediaPlayer.ScaleType.SURFACE_ORIGINAL to "Original",
+    )
+    private const val SCALE_FIT = 0
+    private const val SCALE_FILL_SCREEN = 1
+
+    /** Fill the screen by default: no black bars. */
+    private const val DEFAULT_SCALE = SCALE_FILL_SCREEN
     private const val TAG = "TorrentXPlayer"
     private const val HIDE_AFTER_MS = 3500L
     private const val PLAY = "▶"

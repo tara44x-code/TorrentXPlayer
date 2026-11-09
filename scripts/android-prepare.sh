@@ -53,8 +53,7 @@ RULES
 # A foreground service keeps the stream server alive while VLC plays in front.
 kotlin_dir="$app/src/main/java/com/tara44x/torrentxplayer"
 test -f "$kotlin_dir/MainActivity.kt"
-cp "$root/android/kotlin/MainActivity.kt" "$root/android/kotlin/StreamService.kt" \
-  "$root/android/kotlin/PlayerActivity.kt" "$kotlin_dir/"
+cp "$root"/android/kotlin/*.kt "$kotlin_dir/"
 manifest="$app/src/main/AndroidManifest.xml"
 sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|&\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />|' "$manifest"
 sed -i 's|</application>|    <service android:name=".StreamService" android:exported="false" android:foregroundServiceType="mediaPlayback" android:stopWithTask="true" />\n    </application>|' "$manifest"
