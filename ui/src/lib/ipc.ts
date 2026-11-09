@@ -42,9 +42,25 @@ export function addTorrentLink(link: string): Promise<TorrentSummary> {
   return invoke<TorrentSummary>('add_torrent_link', { link });
 }
 
-/** Adds a torrent from the contents of a `.torrent` file (sent as the raw request body). */
+/**
+ * File bytes for a command's request body: raw on desktop, base64 in JSON on Android, whose
+ * webview bridge carries JSON only (see `src-tauri/src/body.rs`).
+ */
+function bytesBody(bytes: Uint8Array): Uint8Array | { base64: string } {
+  if (!IS_ANDROID) {
+    return bytes;
+  }
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return { base64: btoa(binary) };
+}
+
+/** Adds a torrent from the contents of a `.torrent` file (sent as the request body). */
 export function addTorrentFile(bytes: Uint8Array): Promise<TorrentSummary> {
-  return invoke<TorrentSummary>('add_torrent_file', bytes);
+  return invoke<TorrentSummary>('add_torrent_file', bytesBody(bytes));
 }
 
 /** Starts streaming a video file. The returned URL contains a secret token: never log it. */
@@ -114,7 +130,7 @@ export function loadSubtitles(streamId: number, fileIndex: number): Promise<Subt
 
 /** Parses a subtitle file the user chose (sent as the raw request body, at most 5 MiB). */
 export function parseSubtitles(bytes: Uint8Array): Promise<SubtitleCues> {
-  return invoke<SubtitleCues>('parse_subtitles', bytes);
+  return invoke<SubtitleCues>('parse_subtitles', bytesBody(bytes));
 }
 
 /** Stops a stream. Downloaded data is kept. */

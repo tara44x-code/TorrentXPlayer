@@ -7,7 +7,7 @@
 //! The contract is documented in `docs/ipc.md`.
 
 use serde::{Deserialize, Serialize};
-use tauri::ipc::{InvokeBody, Request};
+use tauri::ipc::Request;
 use tauri::{AppHandle, Manager as _, State};
 use torrentplayer_prioritize::{Anchor, Config as PrioritizeConfig, Purpose};
 use torrentplayer_stream::StreamId;
@@ -197,7 +197,10 @@ pub(crate) async fn add_torrent_link(
     Ok(TorrentSummary::of(core, info))
 }
 
-/// Adds a torrent from the raw bytes of a `.torrent` file (sent as the request body).
+/// The largest `.torrent` file accepted.
+const MAX_TORRENT_FILE_BYTES: usize = 32 * 1024 * 1024;
+
+/// Adds a torrent from the bytes of a `.torrent` file (sent as the request body).
 #[tauri::command]
 pub(crate) async fn add_torrent_file(
     state: State<'_, AppState>,
@@ -206,12 +209,12 @@ pub(crate) async fn add_torrent_file(
     request: Request<'_>,
 ) -> Result<TorrentSummary, IpcError> {
     let _cache_gate = downloads.cache_gate().lock().await;
-    let InvokeBody::Raw(bytes) = request.body() else {
+    let Some(bytes) = crate::body::bytes(request.body(), MAX_TORRENT_FILE_BYTES) else {
         return Err(IpcError::invalid(
-            "Expected the .torrent file as raw bytes.",
+            "Expected the .torrent file (at most 32 MiB).",
         ));
     };
-    let source = TorrentSource::from_file_bytes(bytes.clone())?;
+    let source = TorrentSource::from_file_bytes(bytes)?;
     let core = state.core().await?;
     let info = capped(ADD_TIMEOUT, async { Ok(core.engine.add(source).await?) }).await?;
     crate::cache::mark_unfinished(&settings.active_download_dir(), &info.info_hash);

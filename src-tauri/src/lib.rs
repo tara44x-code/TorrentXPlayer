@@ -14,6 +14,7 @@
 #![deny(unsafe_code)]
 
 mod audio;
+mod body;
 mod cache;
 mod commands;
 mod convert;

@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use serde::Serialize;
 use tauri::State;
-use tauri::ipc::{InvokeBody, Request};
+use tauri::ipc::Request;
 use torrentplayer_media::{
     MAX_SUBTITLE_BYTES, SubtitleFile, SubtitleTrack, TrackReport, subtitle_files,
 };
@@ -266,17 +266,12 @@ pub(crate) async fn load_subtitles(
 /// Parses a subtitle file the user chose (sent as the raw request body).
 #[tauri::command]
 pub(crate) async fn parse_subtitles(request: Request<'_>) -> Result<SubtitleCues, IpcError> {
-    let InvokeBody::Raw(bytes) = request.body() else {
+    let Some(bytes) = crate::body::bytes(request.body(), MAX_SUBTITLE_BYTES) else {
         return Err(IpcError::invalid(
-            "Expected the subtitle file as raw bytes.",
+            "Expected a subtitle file of at most 5 MiB.",
         ));
     };
-    if bytes.len() > MAX_SUBTITLE_BYTES {
-        return Err(IpcError::invalid(
-            "This subtitle file is larger than 5 MiB.",
-        ));
-    }
-    parse_off_thread(bytes.clone()).await
+    parse_off_thread(bytes).await
 }
 
 fn is_subtitle_file(path: &str) -> bool {
