@@ -72,7 +72,16 @@ jobs:
 
       - name: Build the APK
         working-directory: ui
-        run: npm run tauri -- android build --apk --target aarch64 --ci
+        # Retried: Maven and Gradle downloads sometimes time out (HTTP 504).
+        run: |
+          for attempt in 1 2 3; do
+            if npm run tauri -- android build --apk --target aarch64 --ci; then
+              exit 0
+            fi
+            echo "Build attempt $attempt failed; retrying in 60 s"
+            sleep 60
+          done
+          exit 1
 
       - name: Signing key
         id: key
