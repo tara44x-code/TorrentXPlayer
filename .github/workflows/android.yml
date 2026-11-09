@@ -43,6 +43,15 @@ jobs:
         with:
           shared-key: android-arm64
 
+      - name: Gradle downloads cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/wrapper/dists
+            ~/.gradle/caches/modules-2
+          key: gradle-${{ hashFiles('scripts/android-prepare.sh') }}
+          restore-keys: gradle-
+
       - name: Android NDK
         run: |
           echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"

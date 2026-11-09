@@ -62,6 +62,13 @@ grep -q 'android:name=".PlayerActivity"' "$manifest"
 grep -q 'FOREGROUND_SERVICE_MEDIA_PLAYBACK' "$manifest"
 grep -q 'android:name=".StreamService"' "$manifest"
 
+# Gradle itself: from its GitHub mirror, which stays up when services.gradle.org does not.
+wrapper="$root/src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties"
+if [ -f "$wrapper" ]; then
+  sed -i -E 's#^distributionUrl=https\\://services\.gradle\.org/distributions/gradle-([0-9.]+)-(bin|all)\.zip#distributionUrl=https\\://github.com/gradle/gradle-distributions/releases/download/v\1/gradle-\1-\2.zip#' "$wrapper"
+  grep '^distributionUrl' "$wrapper"
+fi
+
 echo "Android project prepared:"
 grep -n 'usesCleartextTraffic\|rustls-platform-verifier' "$gradle"
 cat "$manifest"
