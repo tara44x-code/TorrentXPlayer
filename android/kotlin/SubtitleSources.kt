@@ -93,10 +93,14 @@ object SubtitleSources {
     language: String,
     subdlKey: String?,
     openSubtitlesKey: String?,
+    subsourceKey: String? = null,
   ): Pair<List<SubResult>, List<String>> {
     val jobs = mutableListOf<Pair<String, () -> List<SubResult>>>()
     jobs += "Podnapisi" to { podnapisi(guess, language) }
     if (!subdlKey.isNullOrBlank()) jobs += "SubDL" to { subdl(guess, language, subdlKey.trim()) }
+    if (!subsourceKey.isNullOrBlank()) {
+      jobs += "SubSource" to { subsource(guess, language, subsourceKey.trim()) }
+    }
     if (!openSubtitlesKey.isNullOrBlank()) {
       jobs += "OpenSubtitles" to { openSubtitles(guess, language, openSubtitlesKey.trim()) }
     }
@@ -168,6 +172,62 @@ object SubtitleSources {
       val label = item.optString("release_name").ifEmpty { item.optString("name") }
       SubResult("SubDL", label, item.optString("lang", language)) {
         http("https://dl.subdl.com$path")
+      }
+    }
+  }
+
+  /** SubSource's language names (the Subscene archive's), by ISO 639-1 code. */
+  private val SUBSOURCE_LANGUAGES = mapOf(
+    "ar" to "arabic", "en" to "english", "fr" to "french", "es" to "spanish",
+    "tr" to "turkish", "fa" to "farsi_persian", "ku" to "kurdish", "de" to "german",
+    "it" to "italian", "pt" to "portuguese", "ru" to "russian", "hi" to "hindi",
+    "ur" to "urdu", "id" to "indonesian", "ms" to "malay", "nl" to "dutch",
+    "el" to "greek", "he" to "hebrew",
+  )
+
+  /** SubSource (the successor of Subscene): find the title, then its subtitles. */
+  private fun subsource(guess: VideoGuess, language: String, key: String): List<SubResult> {
+    val api = "https://api.subsource.net/api/v1/"
+    val headers = mapOf("X-API-Key" to key, "Accept" to "application/json")
+    val name = SUBSOURCE_LANGUAGES[language] ?: throw IOException("language not offered")
+    val titleParams = mutableListOf("api_key" to key, "searchType" to "text", "q" to guess.title.lowercase())
+    guess.season?.let { titleParams += "season" to it.toString() }
+    val found = JSONObject(String(http(api + "movies/search?" + query(titleParams), headers = headers), Charsets.UTF_8))
+      .optJSONArray("data") ?: JSONArray()
+    val wanted = guess.title.lowercase()
+    var movieId: String? = null
+    var fallback: String? = null
+    for (i in 0 until found.length()) {
+      val item = found.optJSONObject(i) ?: continue
+      val id = item.opt("movieId")?.toString()?.takeIf { it.isNotEmpty() && it != "null" } ?: continue
+      if (fallback == null) fallback = id
+      val titles = listOf(item.optString("title"), item.optString("alternateTitle"))
+        .map { it.lowercase() }
+        .filter { it.isNotEmpty() }
+      val titleMatches = titles.any { it.contains(wanted) || wanted.contains(it) }
+      val year = item.optString("releaseYear").toIntOrNull()
+      if (titleMatches && (guess.year == null || year == null || year == guess.year)) {
+        movieId = id
+        break
+      }
+    }
+    val id = movieId ?: fallback ?: return emptyList()
+    val params = mutableListOf("api_key" to key, "language" to name, "limit" to "100", "movieId" to id)
+    if (guess.season != null && guess.episode != null) {
+      params += "seasonNumber" to guess.season.toString()
+      params += "episodeNumber" to guess.episode.toString()
+    }
+    val json = JSONObject(String(http(api + "subtitles?" + query(params), headers = headers), Charsets.UTF_8))
+    val data = json.optJSONArray("data") ?: JSONArray()
+    return (0 until data.length()).mapNotNull { i ->
+      val item = data.optJSONObject(i) ?: return@mapNotNull null
+      val subtitleId = item.opt("subtitleId")?.toString()?.takeIf { it.isNotEmpty() && it != "null" }
+        ?: return@mapNotNull null
+      val releases = item.optJSONArray("releaseInfo")
+      val label = releases?.optString(0)?.takeIf { it.isNotBlank() }
+        ?: item.optString("releaseInfo").ifEmpty { guess.title }
+      SubResult("SubSource", label, language) {
+        http(api + "subtitles/$subtitleId/download?" + query(listOf("api_key" to key)), headers = headers)
       }
     }
   }

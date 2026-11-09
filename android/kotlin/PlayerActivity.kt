@@ -638,6 +638,7 @@ class PlayerActivity : Activity() {
     }
     val sources = mutableListOf("Podnapisi")
     if (!prefs.getString(KEY_SUBDL, null).isNullOrBlank()) sources += "SubDL"
+    if (!prefs.getString(KEY_SUBSOURCE, null).isNullOrBlank()) sources += "SubSource"
     if (!prefs.getString(KEY_OPENSUBTITLES, null).isNullOrBlank()) sources += "OpenSubtitles"
     val details = listOfNotNull(
       guess.year?.let { "Year $it" },
@@ -647,7 +648,7 @@ class PlayerActivity : Activity() {
       text = buildString {
         if (details.isNotEmpty()) append(details).append('\n')
         append("Sources: ").append(sources.joinToString(", "))
-        if (sources.size < 3) append("\nAdd free API keys for SubDL and OpenSubtitles to search more sites.")
+        if (sources.size < 4) append("\nAdd free API keys (SubSource, SubDL, OpenSubtitles) to search more sites.")
       }
       setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
       setPadding(0, dp(10), 0, 0)
@@ -676,8 +677,9 @@ class PlayerActivity : Activity() {
       .show()
     val subdlKey = prefs.getString(KEY_SUBDL, null)
     val openSubtitlesKey = prefs.getString(KEY_OPENSUBTITLES, null)
+    val subsourceKey = prefs.getString(KEY_SUBSOURCE, null)
     Thread {
-      val (results, errors) = SubtitleSources.search(guess, language, subdlKey, openSubtitlesKey)
+      val (results, errors) = SubtitleSources.search(guess, language, subdlKey, openSubtitlesKey, subsourceKey)
       runOnUiThread {
         progress.dismiss()
         if (isFinishing || isDestroyed) return@runOnUiThread
@@ -731,6 +733,12 @@ class PlayerActivity : Activity() {
       hint = "OpenSubtitles.com API key (Consumers)"
       setText(prefs.getString(KEY_OPENSUBTITLES, ""))
     }
+    val subsource = EditText(ctx).apply {
+      setSingleLine()
+      hint = "SubSource API key (Subscene archive)"
+      setText(prefs.getString(KEY_SUBSOURCE, ""))
+    }
+    layout.addView(subsource)
     layout.addView(subdl)
     layout.addView(openSubtitles)
     builder
@@ -740,6 +748,7 @@ class PlayerActivity : Activity() {
         prefs.edit()
           .putString(KEY_SUBDL, subdl.text.toString().trim())
           .putString(KEY_OPENSUBTITLES, openSubtitles.text.toString().trim())
+          .putString(KEY_SUBSOURCE, subsource.text.toString().trim())
           .apply()
         toast("Saved")
         searchOnline()
@@ -1037,6 +1046,7 @@ class PlayerActivity : Activity() {
     private const val KEY_LANGUAGE = "subtitle_language"
     private const val KEY_SUBDL = "subdl_key"
     private const val KEY_OPENSUBTITLES = "opensubtitles_key"
+    private const val KEY_SUBSOURCE = "subsource_key"
 
     /** Screen modes, in the order the ⛶ button cycles through them. */
     private val SCALES = listOf(

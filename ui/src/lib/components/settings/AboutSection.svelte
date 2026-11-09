@@ -2,14 +2,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { getAppInfo, type AppInfo } from '../../ipc';
-  import { licenseSummary } from '../../settings';
 
   let info = $state<AppInfo | null>(null);
   let notices = $state<string | null>(null);
   let showNotices = $state(false);
   let loadingNotices = $state(false);
 
-  const summary = $derived(notices === null ? [] : licenseSummary(notices));
 
   async function loadNotices(): Promise<void> {
     loadingNotices = true;
@@ -37,35 +35,25 @@
     <dt>Version</dt>
     <dd>{info ? `${info.name} ${info.version}` : '…'}</dd>
     <dt>License</dt>
-    <dd>{info?.license ?? 'MIT OR Apache-2.0'} — free and open source</dd>
+    <dd>
+      <!-- The third-party notices stay one tap away (their licenses require it). -->
+      <button
+        type="button"
+        class="license"
+        aria-expanded={showNotices}
+        aria-controls="about-notices"
+        onclick={() => {
+          showNotices = !showNotices;
+        }}
+      >
+        {info?.license ?? 'MIT OR Apache-2.0'} — free and open source
+      </button>
+    </dd>
     <dt>Developer</dt>
     <dd class="developer"><span dir="rtl">مهند سات لنك</span> <span class="devil" aria-hidden="true">😈</span></dd>
     <dt>Based on</dt>
     <dd>TorrentPlayer (torrentplayer.io) · Video engine: VLC (libVLC)</dd>
   </dl>
-  <h4>Third-party software</h4>
-  <p class="intro">
-    Torrent X Player is built on open-source software. Each component keeps its own license; the full
-    texts are below.
-  </p>
-  {#if summary.length > 0}
-    <ul class="licenses">
-      {#each summary as item (item.license)}
-        <li><span>{item.license}</span><span class="count">{item.count}</span></li>
-      {/each}
-    </ul>
-  {/if}
-  <button
-    type="button"
-    aria-expanded={showNotices}
-    aria-controls="about-notices"
-    disabled={notices === null && !loadingNotices}
-    onclick={() => {
-      showNotices = !showNotices;
-    }}
-  >
-    {showNotices ? 'Hide full notices' : 'Show full notices'}
-  </button>
   {#if showNotices && notices !== null}
     <pre id="about-notices" class="notices">{notices}</pre>
   {/if}
@@ -87,32 +75,9 @@
     margin: 0;
   }
 
-  .intro {
-    margin: 0 0 0.75rem;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-  }
 
-  .licenses {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-    gap: 0.3rem 1.5rem;
-    margin: 0 0 1rem;
-    padding: 0;
-    list-style: none;
-    font-size: 0.85rem;
-  }
 
-  .licenses li {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-  }
 
-  .count {
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-  }
 
   .notices {
     max-height: 24rem;
@@ -159,5 +124,15 @@
     95% {
       transform: rotate(-6deg) scale(1.05);
     }
+  }
+
+  .license {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
   }
 </style>
