@@ -43,6 +43,7 @@ import android.widget.TextView
 import android.widget.Toast
 import java.io.File
 import java.io.IOException
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.videolan.libvlc.LibVLC
@@ -74,6 +75,7 @@ class PlayerActivity : Activity() {
   private var lengthMs = 0L
   private var ended = false
   private var resumeAfterPause = false
+  private var viewsAttached = false
   private var videoTitle = ""
   private var scaleIndex = DEFAULT_SCALE
   private lateinit var prefs: SharedPreferences
@@ -135,6 +137,7 @@ class PlayerActivity : Activity() {
       val vlc = LibVLC(this, arrayListOf("--network-caching=3000", "--audio-time-stretch"))
       val mediaPlayer = MediaPlayer(vlc)
       mediaPlayer.attachViews(videoLayout, null, true, false)
+      viewsAttached = true
       val media = Media(vlc, Uri.parse(url))
       media.setHWDecoderEnabled(true, false)
       media.addOption(":network-caching=3000")
@@ -170,10 +173,29 @@ class PlayerActivity : Activity() {
     player?.pause()
   }
 
+  override fun onStart() {
+    super.onStart()
+    // Back from the file picker (or the home screen): the video surface was destroyed while we
+    // were away, so give libVLC the new one and restart its video output.
+    val mediaPlayer = player ?: return
+    if (!viewsAttached) {
+      mediaPlayer.attachViews(videoLayout, null, true, false)
+      viewsAttached = true
+      mediaPlayer.setVideoTrackEnabled(true)
+      applyScale(announce = false)
+    }
+  }
+
   override fun onStop() {
     super.onStop()
-    // The picture-in-picture window was closed.
-    if (!isFinishing) player?.pause()
+    val mediaPlayer = player ?: return
+    // Also when the picture-in-picture window is closed.
+    if (!isFinishing) mediaPlayer.pause()
+    if (viewsAttached) {
+      mediaPlayer.setVideoTrackEnabled(false)
+      mediaPlayer.detachViews()
+      viewsAttached = false
+    }
   }
 
   override fun onUserLeaveHint() {
@@ -236,7 +258,8 @@ class PlayerActivity : Activity() {
     player?.let {
       it.setEventListener(null)
       it.stop()
-      it.detachViews()
+      if (viewsAttached) it.detachViews()
+      viewsAttached = false
       it.release()
     }
     player = null
@@ -327,7 +350,7 @@ class PlayerActivity : Activity() {
     val mediaPlayer = player ?: return
     var delayMs = (if (audioDelay) mediaPlayer.audioDelay else mediaPlayer.spuDelay) / 1000L
     fun describe(): String {
-      val seconds = "%+.1f s".format(delayMs / 1000.0)
+      val seconds = String.format(Locale.US, "%+.1f s", delayMs / 1000.0)
       val what = if (audioDelay) "Audio" else "Subtitles"
       return if (delayMs == 0L) "$what are in sync with the video (0.0 s)." else "$what: $seconds"
     }
@@ -997,6 +1020,7 @@ class PlayerActivity : Activity() {
     }
 
     timeText = TextView(this).apply {
+      textDirection = View.TEXT_DIRECTION_LTR
       setTextColor(Color.WHITE)
       setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
       text = "0:00 / --:--"
@@ -1076,7 +1100,13 @@ class PlayerActivity : Activity() {
       val h = total / 3600
       val m = (total % 3600) / 60
       val s = total % 60
-      return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
+      // Latin digits, left to right, whatever the phone's language.
+      val text = if (h > 0) {
+        String.format(Locale.US, "%d:%02d:%02d", h, m, s)
+      } else {
+        String.format(Locale.US, "%d:%02d", m, s)
+      }
+      return "\u200E" + text
     }
   }
 }
