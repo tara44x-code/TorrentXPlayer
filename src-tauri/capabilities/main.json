@@ -29,6 +29,7 @@
     "allow-open-link",
     "allow-open-in-player",
     "allow-play-in-app",
+    "allow-take-shared-link",
     "allow-preload-status",
     "allow-load-queue",
     "allow-save-queue",

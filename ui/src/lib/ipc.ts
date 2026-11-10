@@ -455,6 +455,14 @@ export function playInApp(url: string, title: string): Promise<void> {
   return invoke<undefined>('play_in_app', { url, title });
 }
 
+/**
+ * A magnet link, or `torrentfile:` and a base64 `.torrent` file, that another app opened in this
+ * one (Android), if one is waiting.
+ */
+export function takeSharedLink(): Promise<string | null> {
+  return invoke<string | null>('take_shared_link');
+}
+
 /** Whether the app runs on Android, where streams can be handed to another player. */
 export const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
 

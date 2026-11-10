@@ -244,6 +244,7 @@ pub fn run() -> anyhow::Result<()> {
             details::open_link,
             external::open_in_player,
             external::play_in_app,
+            external::take_shared_link,
             preload::preload_status,
             queue::load_queue,
             queue::save_queue,

@@ -32,6 +32,7 @@ fn main() {
             "open_link",
             "open_in_player",
             "play_in_app",
+            "take_shared_link",
             "preload_status",
             "load_queue",
             "save_queue",

@@ -27,6 +27,8 @@
   import { explorerTorrents, torrentKeys, type ExplorerTorrent } from './lib/explorer';
   import { byId } from './lib/downloads';
   import {
+    IS_ANDROID,
+    takeSharedLink,
     addTorrentFile,
     addTorrentLink,
     devAutoplay,
@@ -711,6 +713,81 @@
 
   function addLink(link: string, infoHash: string | null = null): void {
     void add(() => fetchTorrent(link, infoHash));
+  }
+
+  /**
+   * A torrent another app opened in this one (a magnet link from the browser, a .torrent file
+   * from a file manager): opens it and shows its files to choose from, all or some.
+   */
+  async function openShared(load: () => Promise<TorrentSummary>): Promise<void> {
+    const request = ++selection;
+    addError = null;
+    showToast('Opening torrent…');
+    try {
+      const torrent = await load();
+      if (request !== selection) {
+        return;
+      }
+      playError = null;
+      lastTorrentId = torrent.id;
+      navigate({ name: 'torrent', torrentId: torrent.id });
+      if (torrent.files.some(isPlayable)) {
+        chooser = torrent;
+      }
+    } catch (reason: unknown) {
+      showToast(`Could not open torrent: ${errorMessage(reason)}`, { error: true });
+    }
+  }
+
+  /** Collects links opened from other apps (Android), now and whenever the app is in front. */
+  onMount(() => {
+    if (!IS_ANDROID) {
+      return;
+    }
+    let busy = false;
+    const check = async (): Promise<void> => {
+      if (busy || document.hidden) {
+        return;
+      }
+      busy = true;
+      try {
+        const link = await takeSharedLink();
+        if (link?.startsWith('torrentfile:')) {
+          const binary = atob(link.slice('torrentfile:'.length));
+          const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+          await openShared(fileLoader(bytes));
+        } else if (link?.toLowerCase().startsWith('magnet:')) {
+          await openShared(() => fetchTorrent(link));
+        }
+      } catch {
+        // Checked again shortly.
+      } finally {
+        busy = false;
+      }
+    };
+    void check();
+    const timer = setInterval(() => void check(), 1200);
+    const onVisible = (): void => void check();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  });
+
+  /** Adds a `.torrent` file's bytes once, however many times it is opened. */
+  function fileLoader(bytes: Uint8Array): () => Promise<TorrentSummary> {
+    return async () => {
+      const digest = await crypto.subtle.digest('SHA-256', bytes.slice().buffer);
+      const key = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join(
+        '',
+      );
+      return torrentLoads.run([`file:${key}`], async () => {
+        const torrent = await addTorrentFile(bytes);
+        remember(torrent, null);
+        return torrent;
+      });
+    };
   }
 
   function addFile(bytes: Uint8Array): void {

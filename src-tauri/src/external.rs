@@ -68,6 +68,26 @@ fn play(_url: &str, _title: &str) -> Result<(), IpcError> {
     ))
 }
 
+/// The magnet link or `.torrent` file (`torrentfile:` and base64) another app opened in this
+/// one, if one is waiting. The page asks every second or so on Android.
+#[tauri::command]
+pub(crate) fn take_shared_link() -> Option<String> {
+    shared_link()
+}
+
+#[cfg(target_os = "android")]
+fn shared_link() -> Option<String> {
+    android::take_link()
+        .map_err(|error| tracing::debug!(%error, "could not check for a shared link"))
+        .ok()
+        .flatten()
+}
+
+#[cfg(not(target_os = "android"))]
+fn shared_link() -> Option<String> {
+    None
+}
+
 #[cfg(target_os = "android")]
 fn view(url: &str) -> Result<(), IpcError> {
     android::launch(url, None).map_err(|error| {
@@ -90,7 +110,7 @@ fn view(_url: &str) -> Result<(), IpcError> {
 #[cfg(target_os = "android")]
 #[allow(unsafe_code)]
 mod android {
-    use jni::objects::{JObject, JValue};
+    use jni::objects::{JClass, JObject, JString, JValue};
     use jni::{jni_sig, jni_str};
 
     /// `Intent.FLAG_ACTIVITY_NEW_TASK`.
@@ -99,6 +119,8 @@ mod android {
     /// The app's package and its player screen (see `android/kotlin/PlayerActivity.kt`).
     const PACKAGE: &str = "com.tara44x.torrentxplayer";
     const PLAYER_ACTIVITY: &str = "com.tara44x.torrentxplayer.PlayerActivity";
+    /// Where `MainActivity` leaves links opened from other apps.
+    const INBOX_CLASS: &str = "com.tara44x.torrentxplayer.LinkInbox";
 
     /// `title`: `Some` opens the built-in player, `None` another app.
     pub(super) fn launch(url: &str, title: Option<&str>) -> Result<(), jni::errors::Error> {
@@ -113,6 +135,57 @@ mod android {
             }
             started
         })
+    }
+
+    /// `LinkInbox.take()`, through the app's class loader (the JNI one sees system classes only).
+    pub(super) fn take_link() -> Result<Option<String>, jni::errors::Error> {
+        let context = ndk_context::android_context();
+        // SAFETY: as in `launch`.
+        let vm = unsafe { jni::JavaVM::from_raw(context.vm().cast::<jni::sys::JavaVM>()) };
+        vm.attach_current_thread(|env| -> Result<Option<String>, jni::errors::Error> {
+            let taken = take(env, context.context());
+            if env.exception_check() {
+                env.exception_clear();
+            }
+            taken
+        })
+    }
+
+    fn take(
+        env: &mut jni::Env<'_>,
+        context: *mut std::ffi::c_void,
+    ) -> Result<Option<String>, jni::errors::Error> {
+        // SAFETY: ndk-context holds a global reference to the context, usable on any thread.
+        let context = unsafe { JObject::from_raw(env, context.cast()) };
+        let loader = env
+            .call_method(
+                &context,
+                jni_str!("getClassLoader"),
+                jni_sig!("()Ljava/lang/ClassLoader;"),
+                &[],
+            )?
+            .l()?;
+        let name = env.new_string(INBOX_CLASS)?;
+        let class = env
+            .call_method(
+                &loader,
+                jni_str!("loadClass"),
+                jni_sig!("(Ljava/lang/String;)Ljava/lang/Class;"),
+                &[(&name).into()],
+            )?
+            .l()?;
+        let class = env.cast_local::<JClass>(class)?;
+        let link = env.call_static_method(
+            &class,
+            jni_str!("take"),
+            jni_sig!("()Ljava/lang/String;"),
+            &[],
+        )?;
+        if link.is_null() {
+            return Ok(None);
+        }
+        let link = env.cast_local::<JString>(link.l()?)?;
+        Ok(Some(link.try_to_string(env)?))
     }
 
     fn start(

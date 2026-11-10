@@ -48,6 +48,8 @@ cat >> "$app/proguard-rules.pro" <<'RULES'
 -keep, includedescriptorclasses class org.rustls.platformverifier.** { *; }
 # libVLC calls into its Java classes from native code.
 -keep class org.videolan.libvlc.** { *; }
+# Called from Rust through JNI only.
+-keep class com.tara44x.torrentxplayer.LinkInbox { *; }
 RULES
 
 # A foreground service keeps the stream server alive while VLC plays in front.
@@ -59,6 +61,42 @@ sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|&\n    
 sed -i 's|</application>|    <service android:name=".StreamService" android:exported="false" android:foregroundServiceType="mediaPlayback" android:stopWithTask="true" />\n    </application>|' "$manifest"
 sed -i 's|</application>|    <activity android:name=".PlayerActivity" android:exported="false" android:configChanges="orientation\|screenSize\|smallestScreenSize\|screenLayout\|keyboardHidden\|uiMode" android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" android:supportsPictureInPicture="true" android:resizeableActivity="true" />\n    </application>|' "$manifest"
 grep -q 'android:name=".PlayerActivity"' "$manifest"
+# Magnet links and .torrent files from the browser, file managers, and the share menu.
+python3 - "$manifest" <<'PY'
+import sys
+path = sys.argv[1]
+text = open(path).read()
+filters = """
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="magnet" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/x-bittorrent" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/x-bittorrent" />
+            </intent-filter>
+        </activity>"""
+assert "</activity>" in text
+text = text.replace("</activity>", filters.lstrip("\n"), 1)
+open(path, "w").write(text)
+PY
+grep -q 'android:scheme="magnet"' "$manifest"
 grep -q 'FOREGROUND_SERVICE_MEDIA_PLAYBACK' "$manifest"
 grep -q 'android:name=".StreamService"' "$manifest"
 
