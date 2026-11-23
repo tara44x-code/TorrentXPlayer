@@ -135,7 +135,11 @@
   /** Why handing the stream to another player failed, if it did (Android). */
   let externalError = $state<string | null>(null);
   /** Whether the VLC player has this stream: the web player stays paused until the user plays. */
-  let handedToVlc = false;
+  let handedToVlc = $state(false);
+  /** The webview cannot decode this video (Android): the VLC player is the way to watch it. */
+  let webUnsupported = $state(false);
+  /** On Android, the screen behind the VLC player: no error, just a way back to VLC. */
+  const vlcPanel = $derived(IS_ANDROID && (handedToVlc || webUnsupported));
 
   /**
    * Plays this stream in the built-in libVLC player screen (Android), which plays any format as
@@ -1162,10 +1166,13 @@
         stopConversion();
         return;
       }
-      const code = video?.error?.code;
-      playbackError = IS_ANDROID
-        ? `This video can't play inside the app${code ? ` (error ${code})` : ''}. Tap “Play with VLC” to watch it in the VLC player.`
-        : "The built-in player can't play this format. It keeps downloading; once done you can open it in another player such as VLC.";
+      if (IS_ANDROID) {
+        // Not an error on phones: the VLC player plays every format.
+        webUnsupported = true;
+        return;
+      }
+      playbackError =
+        "The built-in player can't play this format. It keeps downloading; once done you can open it in another player such as VLC.";
     }}
   ></video>
 
@@ -1178,20 +1185,26 @@
     {/if}
   </div>
 
-  {#if IS_ANDROID && (playbackError !== null || externalError !== null)}
-    <div class="external-cta">
-      {#if playbackError !== null}
-        <button type="button" class="external big" onclick={() => void openExternal()}>
-          ▶ Play with VLC
-        </button>
-      {/if}
+  {#if vlcPanel}
+    <div class="vlc-panel">
+      <div class="vlc-icon" aria-hidden="true">▶</div>
+      <h2>Playing in VLC Player</h2>
+      <p class="vlc-file">{stream.fileName}</p>
+      <p class="vlc-hint">The video plays full screen in the VLC player, in any format.</p>
+      <button type="button" class="external big" onclick={() => void openExternal()}>
+        ▶ Open VLC Player
+      </button>
       {#if externalError !== null}
-        <p>{externalError}</p>
+        <p class="vlc-error">{externalError}</p>
       {/if}
+    </div>
+  {:else if IS_ANDROID && externalError !== null}
+    <div class="external-cta">
+      <p>{externalError}</p>
     </div>
   {/if}
 
-  {#if status}
+  {#if status && !vlcPanel}
     <div class="pill" aria-hidden="true">{status}</div>
   {:else if needsClick}
     <div class="pill" aria-hidden="true">{START_HINT}</div>
@@ -1541,6 +1554,80 @@
   }
 
   .external-cta p {
+    margin: 0;
+    color: #ff5c8a;
+    font-size: 0.85rem;
+  }
+
+  .vlc-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 2rem;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 45%, rgb(0 229 255 / 12%), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 70% 70%, rgb(255 43 214 / 10%), transparent 70%),
+      #05060f;
+    text-align: center;
+  }
+
+  .vlc-icon {
+    display: grid;
+    place-items: center;
+    width: 5.5rem;
+    height: 5.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 0.4rem;
+    border: 3px solid var(--accent);
+    border-radius: 50%;
+    box-shadow:
+      var(--glow),
+      inset 0 0 1.2rem rgb(0 229 255 / 25%);
+    color: var(--accent-2);
+    font-size: 2.4rem;
+    text-shadow: 0 0 0.8rem rgb(255 43 214 / 80%);
+    animation: vlc-pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes vlc-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.06);
+    }
+  }
+
+  .vlc-panel h2 {
+    margin: 0;
+    color: var(--accent);
+    font-size: 1.5rem;
+    text-shadow: 0 0 0.6rem rgb(0 229 255 / 60%);
+  }
+
+  .vlc-file {
+    max-width: 90%;
+    margin: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 0.95rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .vlc-hint {
+    margin: 0 0 0.8rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .vlc-error {
     margin: 0;
     color: #ff5c8a;
     font-size: 0.85rem;
